@@ -1,232 +1,84 @@
-import { useEffect, useMemo, useState } from 'react';
-import { onValue, push, ref, remove, set, update } from 'firebase/database';
-import { db } from './firebase';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { supabase } from './supabase';
 
-const CIDADES = ['NATAL - RN', 'MOSSORÓ - RN', 'FORTALEZA - CE', 'RECIFE - PE'];
-const STATUS_ROTA = ['EM CONSTRUÇÃO', 'TENTANDO ACESSO', 'CONSTRUÍDO', 'ACESSO NEGADO', 'OBSTRUÇÃO', 'FOLGA', 'FERIAS'];
-const MENU = [
-  ['dashboard', '▦', 'Dashboard'],
-  ['rota', '⇄', 'Rota diária'],
-  ['base', '⌕', 'Base geral'],
-  ['historico', '◴', 'Histórico'],
-  ['proximas', '➜', 'Próximas rotas'],
-  ['metas', '◎', 'Metas e equipes'],
-  ['config', '⚙', 'Configurações'],
+const CIDADES = [
+  ['NATAL', 'Natal - RN'], ['MOSSORO', 'Mossoró - RN'],
+  ['FORTALEZA', 'Fortaleza - CE'], ['RECIFE', 'Recife - PE'],
 ];
+const STATUS = ['EM CONSTRUÇÃO','TENTANDO ACESSO','CONSTRUÍDO','ACESSO NEGADO','OBSTRUÇÃO','FOLGA','FERIAS'];
+const MENU = [['dashboard','▦','Dashboard'],['rota','⇄','Rota diária'],['base','⌕','Base geral'],['historico','◴','Histórico'],['proximas','➜','Próximas rotas'],['metas','◎','Metas e equipes'],['config','⚙','Configurações']];
+const n = (v='') => String(v).trim().toUpperCase();
+const hoje = () => new Date().toISOString().slice(0,10);
+const construida = (v) => n(v).includes('CONSTRU');
+const bloqueio = (v) => ['ACESSO NEGADO','OBSTRUÇÃO'].includes(n(v));
+const fmt = (v) => !v ? '—' : new Date(v).toLocaleDateString('pt-BR');
+const codigoEndereco = (v='') => String(v).trim().match(/^(\d{6,12})/)?.[1] || null;
+const podeEditar = (role) => ['ADMIN','GERENTE','CONTROLADOR'].includes(role);
+const nomeCidade = (id) => CIDADES.find(([x]) => x===id)?.[1] || id || '—';
 
-const normalizar = (v = '') => String(v).trim().toUpperCase();
-const cidadeCurta = (v = '') => String(v).split(' - ')[0].trim();
-const hojeISO = () => new Date().toISOString().slice(0, 10);
-const ts = () => Date.now();
-const isConstruido = (s) => normalizar(s).includes('CONSTRU');
-const isBloqueio = (s) => ['ACESSO NEGADO', 'OBSTRUÇÃO'].includes(normalizar(s));
-const codigoEndereco = (endereco = '') => {
-  const m = String(endereco).trim().match(/^(\d{6,12})/);
-  return m ? m[1] : '';
-};
-const fmtData = (v) => {
-  if (!v) return '—';
-  const d = new Date(v);
-  return Number.isNaN(d.getTime()) ? String(v) : d.toLocaleDateString('pt-BR');
-};
-const objetoLista = (obj) => Object.entries(obj || {}).map(([id, value]) => ({ id, ...value }));
-
-function useCaminho(path) {
-  const [valor, setValor] = useState({});
-  const [carregando, setCarregando] = useState(true);
-  useEffect(() => {
-    const unsubscribe = onValue(ref(db, path), (snap) => {
-      setValor(snap.val() || {});
-      setCarregando(false);
-    });
-    return unsubscribe;
-  }, [path]);
-  return [valor, carregando];
+async function listarTudo(tabela, ordem='created_at', asc=false) {
+  let de=0, todos=[];
+  while (true) {
+    const { data, error } = await supabase.from(tabela).select('*').order(ordem,{ascending:asc}).range(de,de+999);
+    if (error) throw error;
+    todos.push(...(data||[]));
+    if (!data || data.length < 1000) break;
+    de += 1000;
+  }
+  return todos;
 }
 
-async function auditar(acao, detalhes) {
-  await push(ref(db, 'auditoria'), { acao, detalhes, dataHora: ts() });
+function Login() {
+  const [email,setEmail]=useState(''); const [senha,setSenha]=useState(''); const [erro,setErro]=useState(''); const [loading,setLoading]=useState(false);
+  async function entrar(e){e.preventDefault();setLoading(true);setErro('');const {error}=await supabase.auth.signInWithPassword({email,password:senha});if(error)setErro('Não foi possível entrar. Confira e-mail e senha.');setLoading(false)}
+  return <div className="login-page"><form className="login-card" onSubmit={entrar}><div className="brand login-brand"><span className="brand-mark">T</span><div><strong>TechNET</strong><small>Controle de Rotas MDU</small></div></div><h1>Acesso ao sistema</h1><p>Use a mesma conta MDU cadastrada no TechNET.</p><label>E-mail</label><input type="email" required value={email} onChange={e=>setEmail(e.target.value)}/><label>Senha</label><input type="password" required value={senha} onChange={e=>setSenha(e.target.value)}/>{erro&&<div className="error-box">{erro}</div>}<button className="primary login-button" disabled={loading}>{loading?'Entrando...':'Entrar'}</button></form></div>;
 }
 
-function App() {
-  const [pagina, setPagina] = useState('dashboard');
-  const [rotaObj, carregandoRota] = useCaminho('rotaAtual');
-  const [baseObj, carregandoBase] = useCaminho('baseGeral');
-  const [histObj] = useCaminho('historicoRota');
-  const [proxObj] = useCaminho('proximasRotas');
-
-  const rota = useMemo(() => objetoLista(rotaObj).sort((a, b) => String(a.cidade).localeCompare(String(b.cidade))), [rotaObj]);
-  const base = useMemo(() => objetoLista(baseObj), [baseObj]);
-  const historico = useMemo(() => objetoLista(histObj).sort((a, b) => (b.dataHora || 0) - (a.dataHora || 0)), [histObj]);
-  const proximas = useMemo(() => objetoLista(proxObj).sort((a, b) => (a.prioridade || 99) - (b.prioridade || 99)), [proxObj]);
-
-  async function consolidarNaBase(item, novoStatus) {
-    if (!isConstruido(novoStatus)) return;
-    const codigo = item.codigoImovel || codigoEndereco(item.endereco);
-    const existente = base.find((x) => codigo && String(x.codigoImovel || '') === String(codigo));
-    const registro = {
-      cidade: cidadeCurta(item.cidade),
-      equipe: [item.tecnico, item.auxiliar].filter(Boolean).join(' E '),
-      tipoProjeto: item.tipoProjeto || '',
-      sinergia: item.sinergia || '',
-      codigoImovel: codigo || '',
-      endereco: item.endereco || '',
-      nome: item.nome || '',
-      hps: Number(item.hps || 0),
-      construcao: new Date().toISOString(),
-      mes: new Date().toLocaleDateString('pt-BR', { month: 'long', year: '2-digit' }),
-      status: 'Construído/Liberado',
-      observacao: item.observacao || '',
-      atualizadoEm: ts(),
-      origem: 'rotaAtual',
-    };
-    if (existente) await update(ref(db, `baseGeral/${existente.id}`), registro);
-    else await push(ref(db, 'baseGeral'), registro);
-  }
-
-  async function registrarHistorico(item, status) {
-    if (!isBloqueio(status)) return;
-    await push(ref(db, 'historicoRota'), {
-      dataHora: ts(), cidade: item.cidade || '', dataRota: hojeISO(), equipe: [item.tecnico, item.auxiliar].filter(Boolean).join(' E '),
-      endereco: item.endereco || '', hps: Number(item.hps || 0), blocos: Number(item.blocos || 0), status,
-      dataInicio: item.dataInicio || '', sinergia: item.sinergia || '', observacao: 'Registrado automaticamente pelo sistema',
-    });
-  }
-
-  async function alterarRota(id, campo, valor) {
-    const item = rota.find((x) => x.id === id);
-    if (!item) return;
-    await update(ref(db, `rotaAtual/${id}`), { [campo]: valor, atualizadoEm: ts() });
-    if (campo === 'status') {
-      await consolidarNaBase(item, valor);
-      await registrarHistorico(item, valor);
+export default function App(){
+  const [sessao,setSessao]=useState(null),[perfil,setPerfil]=useState(null),[pagina,setPagina]=useState('dashboard');
+  const [rota,setRota]=useState([]),[base,setBase]=useState([]),[historico,setHistorico]=useState([]),[proximas,setProximas]=useState([]),[carregando,setCarregando]=useState(true),[aviso,setAviso]=useState('');
+  useEffect(()=>{supabase.auth.getSession().then(({data})=>setSessao(data.session));const {data:{subscription}}=supabase.auth.onAuthStateChange((_e,s)=>setSessao(s));return()=>subscription.unsubscribe()},[]);
+  useEffect(()=>{if(!sessao){setPerfil(null);return}supabase.from('profiles').select('id,name,email,role,city_id').eq('auth_user_id',sessao.user.id).maybeSingle().then(({data})=>setPerfil(data))},[sessao]);
+  const carregar=useCallback(async()=>{if(!sessao)return;setCarregando(true);try{const [r,b,h,q]=await Promise.all([listarTudo('route_daily','route_date',false),listarTudo('route_general','construction_date',false),listarTudo('route_history','occurred_at',false),listarTudo('route_queue','priority',true)]);setRota(r);setBase(b);setHistorico(h);setProximas(q)}catch(e){setAviso(e.message)}finally{setCarregando(false)}},[sessao]);
+  useEffect(()=>{carregar()},[carregar]);
+  useEffect(()=>{if(!sessao)return;const canal=supabase.channel('rotas-live').on('postgres_changes',{event:'*',schema:'public',table:'route_daily'},carregar).on('postgres_changes',{event:'*',schema:'public',table:'route_queue'},carregar).subscribe();return()=>supabase.removeChannel(canal)},[sessao,carregar]);
+  if(!sessao)return <Login/>;
+  if(carregando&&!rota.length)return <div className="loading"><div className="loader"/><b>Carregando rotas...</b></div>;
+  const editavel=podeEditar(perfil?.role);
+  async function auditar(acao,entidade,id,detalhes={}){await supabase.from('route_audit').insert({actor_id:sessao.user.id,action:acao,entity:entidade,entity_id:id,details:detalhes})}
+  async function automatizar(item,novoStatus){
+    if(construida(novoStatus)){
+      const codigo=item.property_code||codigoEndereco(item.address);let existente=null;
+      if(codigo){const {data}=await supabase.from('route_general').select('id').eq('property_code',codigo).limit(1).maybeSingle();existente=data}
+      if(!existente&&item.address){const {data}=await supabase.from('route_general').select('id').eq('city_id',item.city_id).ilike('address',item.address.trim()).limit(1).maybeSingle();existente=data}
+      const registro={city_id:item.city_id,team:[item.technician,item.assistant].filter(Boolean).join(' E '),project_type:item.project_type,synergy:item.synergy,property_code:codigo,address:item.address||'',hps:Number(item.hps||0),construction_date:item.route_date||hoje(),month_label:new Date().toLocaleDateString('pt-BR',{month:'long',year:'2-digit'}),status:'Construído/Liberado',notes:item.notes,source:'ROTA'};
+      if(existente)await supabase.from('route_general').update({...registro,updated_at:new Date().toISOString()}).eq('id',existente.id);else await supabase.from('route_general').insert(registro);
     }
-    await auditar('ALTERAR_ROTA', `${item.tecnico || 'Equipe'} · ${campo}: ${valor}`);
+    if(bloqueio(novoStatus))await supabase.from('route_history').insert({city_id:item.city_id,route_date:item.route_date||hoje(),team:[item.technician,item.assistant].filter(Boolean).join(' E '),address:item.address,hps:Number(item.hps||0),blocks:Number(item.blocks||0),status:novoStatus,start_date:item.start_date,synergy:item.synergy,notes:'Registrado automaticamente pelo sistema'});
   }
-
-  if (carregandoRota || carregandoBase) return <div className="loading"><div className="loader"/><b>Carregando TechNET Rotas...</b></div>;
-
-  const props = { rota, base, historico, proximas, alterarRota };
-  return (
-    <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand"><span className="brand-mark">T</span><div><strong>TechNET</strong><small>Rotas MDU</small></div></div>
-        <nav>{MENU.map(([id, icon, label]) => <button key={id} className={pagina === id ? 'active' : ''} onClick={() => setPagina(id)}><span>{icon}</span>{label}</button>)}</nav>
-        <div className="sidebar-foot"><small>Base migrada da planilha</small><b>MDU 2026</b></div>
-      </aside>
-      <main className="main">
-        <header className="topbar"><div><p>Operação MDU</p><h1>{MENU.find((m) => m[0] === pagina)?.[2]}</h1></div><div className="top-actions"><span className="live-dot"/>Dados em tempo real <div className="avatar">AD</div></div></header>
-        <section className="content">
-          {pagina === 'dashboard' && <Dashboard {...props} />}
-          {pagina === 'rota' && <RotaDiaria {...props} />}
-          {pagina === 'base' && <BaseGeral {...props} />}
-          {pagina === 'historico' && <Historico {...props} />}
-          {pagina === 'proximas' && <ProximasRotas {...props} />}
-          {pagina === 'metas' && <Metas {...props} />}
-          {pagina === 'config' && <Configuracoes />}
-        </section>
-      </main>
-    </div>
-  );
+  async function alterarRota(id,campo,valor){const item=rota.find(x=>x.id===id);if(!item||!editavel)return;const {error}=await supabase.from('route_daily').update({[campo]:valor,updated_at:new Date().toISOString()}).eq('id',id);if(error)return setAviso(error.message);if(campo==='status')await automatizar(item,valor);await auditar('ALTERAR_ROTA','route_daily',id,{campo,valor});await carregar()}
+  const props={rota,base,historico,proximas,alterarRota,carregar,editavel,sessao,perfil,auditar,setAviso};
+  return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-mark">T</span><div><strong>TechNET</strong><small>Rotas MDU</small></div></div><nav>{MENU.map(([id,ico,label])=><button key={id} className={pagina===id?'active':''} onClick={()=>setPagina(id)}><span>{ico}</span>{label}</button>)}</nav><div className="sidebar-foot"><small>{perfil?.role||'USUÁRIO'} · {perfil?.city_id||'GERAL'}</small><b>{perfil?.name||sessao.user.email}</b></div></aside><main className="main"><header className="topbar"><div><p>Operação MDU</p><h1>{MENU.find(x=>x[0]===pagina)?.[2]}</h1></div><div className="top-actions"><span className="live-dot"/>Tempo real<div className="avatar">{(perfil?.name||'AD').slice(0,2).toUpperCase()}</div><button className="ghost" onClick={()=>supabase.auth.signOut()}>Sair</button></div></header>{aviso&&<div className="notice" onClick={()=>setAviso('')}>{aviso}</div>}<section className="content">{pagina==='dashboard'&&<Dashboard {...props}/>} {pagina==='rota'&&<Rota {...props}/>} {pagina==='base'&&<Base {...props}/>} {pagina==='historico'&&<Historico {...props}/>} {pagina==='proximas'&&<Fila {...props}/>} {pagina==='metas'&&<Metas {...props}/>} {pagina==='config'&&<Configuracoes perfil={perfil}/>}</section></main></div>;
 }
 
-function Dashboard({ rota, base }) {
-  const ativos = rota.filter((x) => !['FOLGA', 'FERIAS'].includes(normalizar(x.status)));
-  const hps = ativos.reduce((s, x) => s + Number(x.hps || 0), 0);
-  const blocos = ativos.reduce((s, x) => s + Number(x.blocos || 0), 0);
-  const construidos = ativos.filter((x) => isConstruido(x.status)).length;
-  const alertas = ativos.filter((x) => {
-    if (normalizar(x.status) !== 'TENTANDO ACESSO' || !x.dataInicio) return false;
-    const dias = (Date.now() - new Date(x.dataInicio).getTime()) / 86400000;
-    return dias >= 2;
-  });
-  const cards = [['HPs em rota', hps, '∑'], ['Blocos em rota', blocos, '▦'], ['Construídos hoje', construidos, '✓'], ['Alertas de acesso', alertas.length, '!']];
-  return <>
-    <div className="kpi-grid">{cards.map(([t, v, i]) => <div className="kpi" key={t}><div><small>{t}</small><strong>{v}</strong></div><span>{i}</span></div>)}</div>
-    <div className="grid-2">
-      <div className="panel"><PanelTitle titulo="Situação por cidade" subtitulo="Rota operacional atual"/><div className="city-list">{CIDADES.map((c) => {
-        const itens = ativos.filter((x) => normalizar(x.cidade).startsWith(normalizar(cidadeCurta(c))));
-        const total = itens.reduce((s, x) => s + Number(x.hps || 0), 0);
-        return <div className="city-row" key={c}><div><b>{cidadeCurta(c)}</b><small>{itens.length} equipes</small></div><div className="bar"><i style={{ width: `${Math.min(100, total / 4)}%` }}/></div><strong>{total} HPs</strong></div>;
-      })}</div></div>
-      <div className="panel"><PanelTitle titulo="Alertas operacionais" subtitulo="Itens que exigem ação"/>{alertas.length ? <div className="alerts">{alertas.map((a) => <div className="alert" key={a.id}><span>!</span><div><b>{a.tecnico} / {a.auxiliar}</b><small>{a.endereco || 'Endereço não informado'} · tentando acesso desde {fmtData(a.dataInicio)}</small></div></div>)}</div> : <Empty texto="Nenhum alerta crítico de acesso."/>}</div>
-    </div>
-    <div className="panel"><PanelTitle titulo="Resumo da base histórica" subtitulo="Consolidado migrado da aba Geral"/><div className="history-summary"><div><small>Registros</small><b>{base.length}</b></div><div><small>Construídos/Liberados</small><b>{base.filter((x) => normalizar(x.status).includes('LIBER')).length}</b></div><div><small>HPs históricos</small><b>{base.reduce((s, x) => s + Number(x.hps || 0), 0).toLocaleString('pt-BR')}</b></div><div><small>Cidades</small><b>{new Set(base.map((x) => x.cidade).filter(Boolean)).size}</b></div></div></div>
-  </>;
-}
+function Dashboard({rota,base}){const ativos=rota.filter(x=>!['FOLGA','FERIAS'].includes(n(x.status))),hps=ativos.reduce((s,x)=>s+Number(x.hps||0),0),blocos=ativos.reduce((s,x)=>s+Number(x.blocks||0),0),constr=ativos.filter(x=>construida(x.status)).length,alertas=ativos.filter(x=>n(x.status)==='TENTANDO ACESSO'&&x.start_date&&(Date.now()-new Date(x.start_date).getTime())/86400000>=2);return <><div className="kpi-grid">{[['HPs em rota',hps,'∑'],['Blocos em rota',blocos,'▦'],['Construídos',constr,'✓'],['Alertas de acesso',alertas.length,'!']].map(([t,v,i])=><div className="kpi" key={t}><div><small>{t}</small><strong>{v}</strong></div><span>{i}</span></div>)}</div><div className="grid-2"><Panel titulo="Situação por cidade" subtitulo="Rota operacional atual"><div className="city-list">{CIDADES.map(([id,nome])=>{const a=ativos.filter(x=>x.city_id===id),total=a.reduce((s,x)=>s+Number(x.hps||0),0);return <div className="city-row" key={id}><div><b>{nome.split(' - ')[0]}</b><small>{a.length} equipes</small></div><div className="bar"><i style={{width:`${Math.min(100,total/4)}%`}}/></div><strong>{total} HPs</strong></div>})}</div></Panel><Panel titulo="Alertas operacionais" subtitulo="Tentando acesso há 2 dias ou mais">{alertas.length?alertas.map(x=><div className="alert" key={x.id}><span>!</span><div><b>{x.technician} / {x.assistant}</b><small>{x.address} · desde {fmt(x.start_date)}</small></div></div>):<Empty texto="Nenhum alerta crítico."/>}</Panel></div><Panel titulo="Base histórica" subtitulo="Dados consolidados da aba Geral"><div className="history-summary"><K t="Registros" v={base.length}/><K t="Liberados" v={base.filter(x=>n(x.status).includes('LIBER')).length}/><K t="HPs históricos" v={base.reduce((s,x)=>s+Number(x.hps||0),0).toLocaleString('pt-BR')}/><K t="Cidades" v={new Set(base.map(x=>x.city_id)).size}/></div></Panel></>}
 
-function RotaDiaria({ rota, alterarRota }) {
-  const [cidade, setCidade] = useState('TODAS');
-  const [novo, setNovo] = useState(false);
-  const filtrada = cidade === 'TODAS' ? rota : rota.filter((x) => normalizar(x.cidade).startsWith(normalizar(cidadeCurta(cidade))));
-  return <>
-    <div className="toolbar"><div className="segmented"><button className={cidade === 'TODAS' ? 'on' : ''} onClick={() => setCidade('TODAS')}>Todas</button>{CIDADES.map((c) => <button className={cidade === c ? 'on' : ''} onClick={() => setCidade(c)} key={c}>{cidadeCurta(c)}</button>)}</div><button className="primary" onClick={() => setNovo(!novo)}>+ Adicionar equipe</button></div>
-    {novo && <NovaRota onClose={() => setNovo(false)} />}
-    <div className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Fusão</th><th>Equipe</th><th>Endereço</th><th>HPs</th><th>Blocos</th><th>Status</th><th>Início</th><th>Sinergia</th><th>Projeto</th></tr></thead><tbody>{filtrada.map((x) => <tr key={x.id}><td><input type="checkbox" checked={!!x.maquinaFusao} onChange={(e) => alterarRota(x.id, 'maquinaFusao', e.target.checked)}/></td><td><b>{x.tecnico || '—'}</b><small>{x.auxiliar || 'Sem auxiliar'}<br/>{cidadeCurta(x.cidade)}</small></td><td className="address">{x.endereco || '—'}</td><td><InlineNumero value={x.hps} onChange={(v) => alterarRota(x.id, 'hps', v)}/></td><td><InlineNumero value={x.blocos} onChange={(v) => alterarRota(x.id, 'blocos', v)}/></td><td><select className={`status ${normalizar(x.status).replace(/\s+/g, '-').toLowerCase()}`} value={x.status || ''} onChange={(e) => alterarRota(x.id, 'status', e.target.value)}><option value="">Selecione</option>{STATUS_ROTA.map((s) => <option key={s}>{s}</option>)}</select></td><td>{fmtData(x.dataInicio)}</td><td><select value={x.sinergia || ''} onChange={(e) => alterarRota(x.id, 'sinergia', e.target.value)}><option value="">—</option><option>COM SINERGIA</option><option>SEM SINERGIA</option></select></td><td>{x.tipoProjeto || '—'}</td></tr>)}</tbody></table></div></div>
-  </>;
-}
+function Rota({rota,alterarRota,carregar,editavel,auditar,sessao}){const [cidade,setCidade]=useState('TODAS'),[novo,setNovo]=useState(false);const lista=cidade==='TODAS'?rota:rota.filter(x=>x.city_id===cidade);return <><div className="toolbar"><div className="segmented"><button className={cidade==='TODAS'?'on':''} onClick={()=>setCidade('TODAS')}>Todas</button>{CIDADES.map(([id,nome])=><button key={id} className={cidade===id?'on':''} onClick={()=>setCidade(id)}>{nome.split(' - ')[0]}</button>)}</div>{editavel&&<button className="primary" onClick={()=>setNovo(!novo)}>+ Adicionar equipe</button>}</div>{novo&&<NovaRota onClose={()=>setNovo(false)} carregar={carregar} auditar={auditar} sessao={sessao}/>}<div className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Fusão</th><th>Equipe</th><th>Endereço</th><th>HPs</th><th>Blocos</th><th>Status</th><th>Início</th><th>Sinergia</th><th>Projeto</th></tr></thead><tbody>{lista.map(x=><tr key={x.id}><td><input type="checkbox" disabled={!editavel} checked={!!x.fusion_machine} onChange={e=>alterarRota(x.id,'fusion_machine',e.target.checked)}/></td><td><b>{x.technician||'—'}</b><small>{x.assistant||'Sem auxiliar'} · {nomeCidade(x.city_id)}</small></td><td className="address">{x.address||'—'}</td><td><input className="inline-number" disabled={!editavel} type="number" value={x.hps||0} onChange={e=>alterarRota(x.id,'hps',Number(e.target.value||0))}/></td><td><input className="inline-number" disabled={!editavel} type="number" value={x.blocks||0} onChange={e=>alterarRota(x.id,'blocks',Number(e.target.value||0))}/></td><td><select disabled={!editavel} className="status" value={x.status||''} onChange={e=>alterarRota(x.id,'status',e.target.value)}>{STATUS.map(s=><option key={s}>{s}</option>)}</select></td><td>{fmt(x.start_date)}</td><td><select disabled={!editavel} value={x.synergy||''} onChange={e=>alterarRota(x.id,'synergy',e.target.value)}><option value="">—</option><option>COM SINERGIA</option><option>SEM SINERGIA</option></select></td><td>{x.project_type||'—'}</td></tr>)}</tbody></table></div></div></>}
 
-function InlineNumero({ value, onChange }) {
-  return <input className="inline-number" type="number" min="0" value={value ?? 0} onChange={(e) => onChange(Number(e.target.value || 0))}/>;
-}
+function NovaRota({onClose,carregar,auditar}){const [f,setF]=useState({city_id:'NATAL',technician:'',assistant:'',address:'',hps:0,blocks:0,status:'EM CONSTRUÇÃO',start_date:hoje(),synergy:'SEM SINERGIA',project_type:'PROJETO F',fusion_machine:false});async function salvar(e){e.preventDefault();const row={...f,hps:Number(f.hps),blocks:Number(f.blocks),property_code:codigoEndereco(f.address),route_date:hoje()};const {data,error}=await supabase.from('route_daily').insert(row).select('id').single();if(!error){await auditar('ADICIONAR_ROTA','route_daily',data.id,{technician:f.technician,address:f.address});await carregar();onClose()}}return <form className="quick-form" onSubmit={salvar}><Campo label="Cidade"><select value={f.city_id} onChange={e=>setF({...f,city_id:e.target.value})}>{CIDADES.map(([id,nome])=><option value={id} key={id}>{nome}</option>)}</select></Campo><Campo label="Técnico"><input required value={f.technician} onChange={e=>setF({...f,technician:e.target.value})}/></Campo><Campo label="Auxiliar"><input value={f.assistant} onChange={e=>setF({...f,assistant:e.target.value})}/></Campo><div className="wide"><Campo label="Endereço / código"><input required value={f.address} onChange={e=>setF({...f,address:e.target.value})}/></Campo></div><Campo label="HPs"><input type="number" value={f.hps} onChange={e=>setF({...f,hps:e.target.value})}/></Campo><Campo label="Blocos"><input type="number" value={f.blocks} onChange={e=>setF({...f,blocks:e.target.value})}/></Campo><Campo label="Sinergia"><select value={f.synergy} onChange={e=>setF({...f,synergy:e.target.value})}><option>COM SINERGIA</option><option>SEM SINERGIA</option></select></Campo><Campo label="Projeto"><select value={f.project_type} onChange={e=>setF({...f,project_type:e.target.value})}><option>PROJETO F</option><option>ONGOING</option><option>HFC</option></select></Campo><div className="form-actions"><button type="button" className="ghost" onClick={onClose}>Cancelar</button><button className="primary">Salvar</button></div></form>}
 
-function NovaRota({ onClose }) {
-  const [f, setF] = useState({ cidade: CIDADES[0], tecnico: '', auxiliar: '', endereco: '', hps: 0, blocos: 0, status: 'EM CONSTRUÇÃO', dataInicio: hojeISO(), sinergia: 'SEM SINERGIA', tipoProjeto: 'PROJETO F', maquinaFusao: false });
-  const campo = (k) => (e) => setF({ ...f, [k]: e.target.type === 'checkbox' ? e.target.checked : e.target.value });
-  async function salvar(e) { e.preventDefault(); await push(ref(db, 'rotaAtual'), { ...f, hps: Number(f.hps || 0), blocos: Number(f.blocos || 0), codigoImovel: codigoEndereco(f.endereco), criadoEm: ts() }); await auditar('ADICIONAR_ROTA', `${f.tecnico} · ${f.endereco}`); onClose(); }
-  return <form className="quick-form" onSubmit={salvar}><div><label>Cidade</label><select value={f.cidade} onChange={campo('cidade')}>{CIDADES.map((c) => <option key={c}>{c}</option>)}</select></div><div><label>Técnico</label><input required value={f.tecnico} onChange={campo('tecnico')}/></div><div><label>Auxiliar</label><input value={f.auxiliar} onChange={campo('auxiliar')}/></div><div className="wide"><label>Endereço / código do imóvel</label><input required value={f.endereco} onChange={campo('endereco')}/></div><div><label>HPs</label><input type="number" value={f.hps} onChange={campo('hps')}/></div><div><label>Blocos</label><input type="number" value={f.blocos} onChange={campo('blocos')}/></div><div><label>Sinergia</label><select value={f.sinergia} onChange={campo('sinergia')}><option>COM SINERGIA</option><option>SEM SINERGIA</option></select></div><div><label>Tipo</label><select value={f.tipoProjeto} onChange={campo('tipoProjeto')}><option>PROJETO F</option><option>ONGOING</option><option>HFC</option></select></div><div className="form-actions"><button type="button" className="ghost" onClick={onClose}>Cancelar</button><button className="primary">Salvar equipe</button></div></form>;
-}
+function Base({base}){const [busca,setBusca]=useState(''),[cidade,setCidade]=useState('TODAS');const lista=useMemo(()=>base.filter(x=>{const t=[x.property_code,x.address,x.name,x.team,x.status].join(' ').toLowerCase();return(!busca||t.includes(busca.toLowerCase()))&&(cidade==='TODAS'||x.city_id===cidade)}),[base,busca,cidade]);function exportar(){const c=['city_id','team','project_type','synergy','property_code','address','name','hps','construction_date','month_label','status','inspection','measured','notes'],esc=v=>`"${String(v??'').replaceAll('"','""')}"`,csv=[c.join(';'),...lista.map(x=>c.map(k=>esc(x[k])).join(';'))].join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=`base-geral-${hoje()}.csv`;a.click()}return <><div className="toolbar"><div className="filters"><input className="search" placeholder="Buscar código, endereço, equipe..." value={busca} onChange={e=>setBusca(e.target.value)}/><select value={cidade} onChange={e=>setCidade(e.target.value)}><option value="TODAS">Todas as cidades</option>{CIDADES.map(([id,nome])=><option value={id} key={id}>{nome}</option>)}</select></div><button className="ghost" onClick={exportar}>Exportar CSV</button></div><div className="panel table-panel"><div className="table-meta"><b>{lista.length.toLocaleString('pt-BR')} registros</b><small>Exibindo até 500 por vez</small></div><div className="table-wrap"><table><thead><tr><th>Cidade</th><th>Código</th><th>Endereço / Nome</th><th>Equipe</th><th>HPs</th><th>Construção</th><th>Status</th><th>Projeto</th></tr></thead><tbody>{lista.slice(0,500).map(x=><tr key={x.id}><td>{nomeCidade(x.city_id)}</td><td><b>{x.property_code||'—'}</b></td><td className="address">{x.address}<small>{x.name||''}</small></td><td>{x.team||'—'}</td><td>{x.hps}</td><td>{fmt(x.construction_date)}</td><td><span className="badge">{x.status||'—'}</span></td><td>{x.project_type||'—'}</td></tr>)}</tbody></table></div></div></>}
 
-function BaseGeral({ base }) {
-  const [busca, setBusca] = useState('');
-  const [cidade, setCidade] = useState('TODAS');
-  const filtrada = useMemo(() => base.filter((x) => {
-    const texto = [x.codigoImovel, x.endereco, x.nome, x.equipe, x.status].join(' ').toLowerCase();
-    return (!busca || texto.includes(busca.toLowerCase())) && (cidade === 'TODAS' || normalizar(x.cidade) === normalizar(cidade));
-  }), [base, busca, cidade]);
-  function exportar() {
-    const cols = ['cidade','equipe','tipoProjeto','sinergia','codigoImovel','endereco','nome','hps','construcao','mes','status','vistoria','medido','observacao'];
-    const esc = (v) => `"${String(v ?? '').replaceAll('"','""')}"`;
-    const csv = [cols.join(';'), ...filtrada.map((x) => cols.map((c) => esc(x[c])).join(';'))].join('\n');
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' })); a.download = `base-geral-${hojeISO()}.csv`; a.click();
-  }
-  const cidades = [...new Set(base.map((x) => x.cidade).filter(Boolean))].sort();
-  return <><div className="toolbar"><div className="filters"><input className="search" placeholder="Buscar código, endereço, equipe..." value={busca} onChange={(e) => setBusca(e.target.value)}/><select value={cidade} onChange={(e) => setCidade(e.target.value)}><option>TODAS</option>{cidades.map((c) => <option key={c}>{c}</option>)}</select></div><button className="ghost" onClick={exportar}>Exportar CSV</button></div><div className="panel table-panel"><div className="table-meta"><b>{filtrada.length.toLocaleString('pt-BR')} registros</b><small>Mostrando até 400 linhas na tela. A busca consulta toda a base carregada.</small></div><div className="table-wrap"><table><thead><tr><th>Cidade</th><th>Código</th><th>Endereço / Nome</th><th>Equipe</th><th>HPs</th><th>Construção</th><th>Status</th><th>Projeto</th></tr></thead><tbody>{filtrada.slice(0,400).map((x) => <tr key={x.id}><td>{x.cidade || '—'}</td><td><b>{x.codigoImovel || '—'}</b></td><td className="address">{x.endereco || '—'}<small>{x.nome || ''}</small></td><td>{x.equipe || '—'}</td><td>{x.hps || 0}</td><td>{fmtData(x.construcao)}</td><td><span className="badge">{x.status || '—'}</span></td><td>{x.tipoProjeto || '—'}</td></tr>)}</tbody></table></div></div></>;
-}
+function Historico({historico}){const [busca,setBusca]=useState('');const lista=historico.filter(x=>[x.team,x.address,x.status,x.city_id].join(' ').toLowerCase().includes(busca.toLowerCase()));return <><div className="toolbar"><input className="search" placeholder="Filtrar histórico..." value={busca} onChange={e=>setBusca(e.target.value)}/></div><div className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Data</th><th>Cidade</th><th>Equipe</th><th>Endereço</th><th>HPs</th><th>Blocos</th><th>Status</th><th>Início</th><th>Observação</th></tr></thead><tbody>{lista.slice(0,500).map(x=><tr key={x.id}><td>{fmt(x.occurred_at)}</td><td>{nomeCidade(x.city_id)}</td><td><b>{x.team||'—'}</b></td><td className="address">{x.address||'—'}</td><td>{x.hps}</td><td>{x.blocks}</td><td><span className="badge warning">{x.status}</span></td><td>{fmt(x.start_date)}</td><td>{x.notes||'—'}</td></tr>)}</tbody></table></div></div></>}
 
-function Historico({ historico }) {
-  const [busca, setBusca] = useState('');
-  const lista = historico.filter((x) => [x.equipe,x.endereco,x.status,x.cidade].join(' ').toLowerCase().includes(busca.toLowerCase()));
-  return <><div className="toolbar"><input className="search" placeholder="Filtrar histórico..." value={busca} onChange={(e) => setBusca(e.target.value)}/></div><div className="panel table-panel"><div className="table-wrap"><table><thead><tr><th>Registrado em</th><th>Cidade</th><th>Equipe</th><th>Endereço</th><th>HPs</th><th>Blocos</th><th>Status</th><th>Início</th><th>Observação</th></tr></thead><tbody>{lista.slice(0,500).map((x) => <tr key={x.id}><td>{fmtData(x.dataHora)}</td><td>{x.cidade}</td><td><b>{x.equipe || '—'}</b></td><td className="address">{x.endereco || '—'}</td><td>{x.hps || 0}</td><td>{x.blocos || 0}</td><td><span className="badge warning">{x.status}</span></td><td>{fmtData(x.dataInicio)}</td><td>{x.observacao || '—'}</td></tr>)}</tbody></table></div></div></>;
-}
+function Fila({proximas,carregar,editavel,auditar}){const [f,setF]=useState({city_id:'NATAL',address:'',status:'PENDENTE',priority:2,notes:'',assigned_to:'',active:true});async function adicionar(e){e.preventDefault();const {data}=await supabase.from('route_queue').insert({...f,priority:Number(f.priority)}).select('id').single();if(data)await auditar('ADICIONAR_FILA','route_queue',data.id,{address:f.address});setF({...f,address:'',notes:'',assigned_to:''});carregar()}async function enviar(x){await supabase.from('route_daily').insert({city_id:x.city_id,technician:x.assigned_to||'',assistant:'',address:x.address,hps:0,blocks:0,status:'TENTANDO ACESSO',start_date:hoje(),route_date:hoje(),synergy:'SEM SINERGIA',project_type:'PROJETO F'});await supabase.from('route_queue').update({active:false,status:'ENVIADO PARA ROTA'}).eq('id',x.id);carregar()}return <>{editavel&&<form className="quick-form" onSubmit={adicionar}><Campo label="Cidade"><select value={f.city_id} onChange={e=>setF({...f,city_id:e.target.value})}>{CIDADES.map(([id,nome])=><option key={id} value={id}>{nome}</option>)}</select></Campo><div className="wide"><Campo label="Endereço"><input required value={f.address} onChange={e=>setF({...f,address:e.target.value})}/></Campo></div><Campo label="Prioridade"><select value={f.priority} onChange={e=>setF({...f,priority:e.target.value})}><option value="1">Alta</option><option value="2">Média</option><option value="3">Baixa</option></select></Campo><Campo label="Atribuído"><input value={f.assigned_to} onChange={e=>setF({...f,assigned_to:e.target.value})}/></Campo><div className="wide"><Campo label="Observação"><input value={f.notes} onChange={e=>setF({...f,notes:e.target.value})}/></Campo></div><div className="form-actions"><button className="primary">Adicionar à fila</button></div></form>}<div className="cards-list">{proximas.filter(x=>x.active).map(x=><article className="route-card" key={x.id}><div className={`priority p${x.priority}`}>{x.priority===1?'ALTA':x.priority===3?'BAIXA':'MÉDIA'}</div><div><small>{nomeCidade(x.city_id)}</small><h3>{x.address}</h3><p>{x.notes||'Sem observação'} · {x.assigned_to||'Não atribuído'}</p></div>{editavel&&<div className="card-actions"><button className="primary" onClick={()=>enviar(x)}>Enviar para rota</button><button className="icon-btn" onClick={async()=>{await supabase.from('route_queue').delete().eq('id',x.id);carregar()}}>×</button></div>}</article>)}</div>{!proximas.filter(x=>x.active).length&&<Empty texto="Nenhuma próxima rota cadastrada."/>}</>}
 
-function ProximasRotas({ proximas }) {
-  const [f, setF] = useState({ cidade: CIDADES[0], endereco: '', status: 'PENDENTE', prioridade: 2, observacao: '', atribuido: '', ativo: true });
-  async function adicionar(e) { e.preventDefault(); await push(ref(db, 'proximasRotas'), { ...f, prioridade: Number(f.prioridade), criadoEm: ts() }); setF({ ...f, endereco: '', observacao: '', atribuido: '' }); }
-  async function enviar(x) { await push(ref(db, 'rotaAtual'), { cidade: x.cidade, tecnico: x.atribuido || '', auxiliar: '', endereco: x.endereco, hps: 0, blocos: 0, status: 'TENTANDO ACESSO', dataInicio: hojeISO(), sinergia: 'SEM SINERGIA', tipoProjeto: 'PROJETO F', maquinaFusao: false, criadoEm: ts() }); await update(ref(db, `proximasRotas/${x.id}`), { ativo: false, status: 'ENVIADO PARA ROTA', atualizadoEm: ts() }); }
-  return <><form className="quick-form" onSubmit={adicionar}><div><label>Cidade</label><select value={f.cidade} onChange={(e) => setF({...f,cidade:e.target.value})}>{CIDADES.map((c)=><option key={c}>{c}</option>)}</select></div><div className="wide"><label>Endereço</label><input required value={f.endereco} onChange={(e)=>setF({...f,endereco:e.target.value})}/></div><div><label>Prioridade</label><select value={f.prioridade} onChange={(e)=>setF({...f,prioridade:e.target.value})}><option value="1">Alta</option><option value="2">Média</option><option value="3">Baixa</option></select></div><div><label>Atribuído</label><input value={f.atribuido} onChange={(e)=>setF({...f,atribuido:e.target.value})}/></div><div className="wide"><label>Observação</label><input value={f.observacao} onChange={(e)=>setF({...f,observacao:e.target.value})}/></div><div className="form-actions"><button className="primary">Adicionar à fila</button></div></form><div className="cards-list">{proximas.filter((x)=>x.ativo !== false).map((x)=><article className="route-card" key={x.id}><div className={`priority p${x.prioridade || 2}`}>{x.prioridade == 1 ? 'ALTA' : x.prioridade == 3 ? 'BAIXA' : 'MÉDIA'}</div><div><small>{x.cidade}</small><h3>{x.endereco}</h3><p>{x.observacao || 'Sem observação'} · {x.atribuido ? `Atribuído a ${x.atribuido}` : 'Não atribuído'}</p></div><div className="card-actions"><button className="primary" onClick={()=>enviar(x)}>Enviar para rota</button><button className="icon-btn" onClick={()=>remove(ref(db,`proximasRotas/${x.id}`))}>×</button></div></article>)}</div>{!proximas.filter((x)=>x.ativo !== false).length && <Empty texto="Nenhuma próxima rota cadastrada."/>}</>;
-}
+function Metas({rota,base}){const ranking=useMemo(()=>{const m={};for(const x of base){if(!x.team)continue;const k=n(x.team);m[k]||={equipe:x.team,hps:0,q:0};m[k].hps+=Number(x.hps||0);if(construida(x.status))m[k].q++}return Object.values(m).sort((a,b)=>b.hps-a.hps).slice(0,30)},[base]);return <div className="grid-2"><Panel titulo="Ranking histórico por HPs" subtitulo="Base Geral"><div className="ranking">{ranking.map((x,i)=><div key={x.equipe}><span>{i+1}</span><div><b>{x.equipe}</b><small>{x.q} construídos</small></div><strong>{x.hps.toLocaleString('pt-BR')} HPs</strong></div>)}</div></Panel><Panel titulo="Produção da rota atual" subtitulo="Equipes em campo"><div className="ranking">{rota.filter(x=>x.technician).sort((a,b)=>b.hps-a.hps).map((x,i)=><div key={x.id}><span>{i+1}</span><div><b>{x.technician}{x.assistant?` / ${x.assistant}`:''}</b><small>{x.status} · {nomeCidade(x.city_id)}</small></div><strong>{x.hps} HPs</strong></div>)}</div></Panel></div>}
 
-function Metas({ rota, base }) {
-  const equipes = useMemo(() => {
-    const mapa = {};
-    for (const x of base) {
-      if (!x.equipe) continue;
-      const k = normalizar(x.equipe);
-      mapa[k] ||= { equipe: x.equipe, construidos: 0, hps: 0 };
-      if (isConstruido(x.status)) mapa[k].construidos++;
-      mapa[k].hps += Number(x.hps || 0);
-    }
-    return Object.values(mapa).sort((a,b)=>b.hps-a.hps).slice(0,30);
-  }, [base]);
-  return <div className="grid-2"><div className="panel"><PanelTitle titulo="Ranking histórico por HPs" subtitulo="Base Geral"/><div className="ranking">{equipes.map((x,i)=><div key={x.equipe}><span>{i+1}</span><div><b>{x.equipe}</b><small>{x.construidos} registros construídos</small></div><strong>{x.hps.toLocaleString('pt-BR')} HPs</strong></div>)}</div></div><div className="panel"><PanelTitle titulo="Produção da rota atual" subtitulo="Equipes em campo"/><div className="ranking">{rota.filter((x)=>x.tecnico).sort((a,b)=>Number(b.hps||0)-Number(a.hps||0)).map((x,i)=><div key={x.id}><span>{i+1}</span><div><b>{x.tecnico}{x.auxiliar ? ` / ${x.auxiliar}` : ''}</b><small>{x.status} · {cidadeCurta(x.cidade)}</small></div><strong>{Number(x.hps||0)} HPs</strong></div>)}</div></div></div>;
-}
+function Configuracoes({perfil}){return <div className="settings-grid"><Panel titulo="Infraestrutura" subtitulo="Ambiente atual"><Setting t="Firebase Hosting" d="Publicação web responsiva"/><Setting t="Supabase PostgreSQL + Realtime" d="Banco seguro com RLS por usuário e cidade"/><Setting t="Planilha legada" d="Fonte da migração inicial" status="MIGRADA"/></Panel><Panel titulo="Permissões" subtitulo="Aplicadas pelo banco"><ul className="rules"><li>Perfil atual: <b>{perfil?.role||'—'}</b>.</li><li>Cidade vinculada: <b>{perfil?.city_id||'Acesso geral'}</b>.</li><li>ADMIN/GERENTE gerenciam todas as cidades; CONTROLADOR gerencia a própria cidade.</li><li>Técnicos e auxiliares possuem visualização da própria cidade.</li></ul></Panel></div>}
 
-function Configuracoes() {
-  return <div className="settings-grid"><div className="panel"><PanelTitle titulo="Integração" subtitulo="Infraestrutura do sistema"/><div className="setting"><div><b>Firebase Realtime Database</b><small>Sincronização em tempo real entre usuários</small></div><span className="ok">ATIVO</span></div><div className="setting"><div><b>Firebase Hosting</b><small>Publicação web responsiva</small></div><span className="ok">ATIVO</span></div><div className="setting"><div><b>Planilha legada</b><small>Usada somente como fonte da migração inicial</small></div><span className="muted-badge">MIGRADA</span></div></div><div className="panel"><PanelTitle titulo="Regras automáticas" subtitulo="Fluxos substituindo a planilha"/><ul className="rules"><li>Ao marcar <b>CONSTRUÍDO</b>, o registro é consolidado na Base Geral.</li><li><b>ACESSO NEGADO</b> e <b>OBSTRUÇÃO</b> entram automaticamente no Histórico.</li><li>Próximas rotas podem ser enviadas diretamente para a rota diária.</li><li>Alterações da rota geram trilha de auditoria.</li></ul></div></div>;
-}
-
-function PanelTitle({ titulo, subtitulo }) { return <div className="panel-title"><div><h2>{titulo}</h2><p>{subtitulo}</p></div></div>; }
-function Empty({ texto }) { return <div className="empty"><span>✓</span><p>{texto}</p></div>; }
-
-export default App;
+function Panel({titulo,subtitulo,children}){return <div className="panel"><div className="panel-title"><div><h2>{titulo}</h2><p>{subtitulo}</p></div></div>{children}</div>}
+function K({t,v}){return <div><small>{t}</small><b>{v}</b></div>}
+function Campo({label,children}){return <div><label>{label}</label>{children}</div>}
+function Setting({t,d,status='ATIVO'}){return <div className="setting"><div><b>{t}</b><small>{d}</small></div><span className={status==='ATIVO'?'ok':'muted-badge'}>{status}</span></div>}
+function Empty({texto}){return <div className="empty"><span>✓</span><p>{texto}</p></div>}
