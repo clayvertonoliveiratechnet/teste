@@ -7,15 +7,15 @@
     "dev": "vite --host 0.0.0.0",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
-    "deploy": "npm run build && firebase deploy"
+    "deploy": "npm run build && firebase deploy --only hosting"
   },
   "dependencies": {
-    "firebase": "^12.3.0",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "@supabase/supabase-js": "2.116.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^5.0.2",
-    "vite": "^7.1.5"
+    "@vitejs/plugin-react": "5.0.2",
+    "vite": "7.1.5"
   }
 }
