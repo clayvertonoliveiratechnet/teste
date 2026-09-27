@@ -54,7 +54,7 @@ Configure somente no servidor: `AI_PROVIDER` (`openai` ou `groq`), `AI_MODEL` e 
 
 ## Verificação
 
-12 testes automatizados: API, roteamento, limites, origem, falhas, serialização de CLI, execução sem shell e caminhos de ida/volta da reunião. Interface verificada em navegador. Autenticação e chamadas reais das três contas dependem do computador do usuário e não foram validadas com suas credenciais nesta entrega.
+14 testes automatizados: API, roteamento, limites, origem, falhas, serialização de CLI, execução sem shell e caminhos de ida/volta da reunião. Interface verificada em navegador. Autenticação e chamadas reais das três contas dependem do computador do usuário e não foram validadas com suas credenciais nesta entrega.
 
 Referências oficiais consultadas em setembro de 2026:
 - https://developers.openai.com/codex/noninteractive
@@ -63,3 +63,5 @@ Referências oficiais consultadas em setembro de 2026:
 - https://antigravity.google/docs/cli/headless/
 
 Arte original gerada por IA. Sem copiar código, marca ou assets do Habbo.
+
+Correção de circulação: corredores externos às baias, assentos como destinos finais, orientação fixa ao sentar e camadas dos móveis por profundidade. Testes verificam que trajetos não atravessam as superfícies das mesas.
