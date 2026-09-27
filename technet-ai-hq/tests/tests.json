@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Criar e persistir uma missão no escritório virtual",
+    "sanity": true,
+    "viewport": "desktop",
+    "covers": ["escritório virtual", "criação de missão", "POST /api/missions", "GET /api/missions", "persistência"],
+    "description": "Verifica o fluxo principal do escritório visual até a criação e persistência de uma missão.",
+    "steps": [
+      "Digite \"Analise o atendimento técnico e organize um plano de melhoria\" no campo do Diretor IA.",
+      "Clique em \"Criar missão\" e aguarde o plano aparecer.",
+      "Atualize a página."
+    ],
+    "expected": "O mapa virtual continua visível e a missão criada permanece disponível após o recarregamento."
+  },
+  {
+    "name": "Mover o avatar e selecionar um agente",
+    "viewport": "desktop",
+    "covers": ["movimentação no mapa", "seleção de agente", "painel de agente"],
+    "description": "Verifica a interação de escritório virtual inspirada em ambientes espaciais.",
+    "steps": [
+      "Clique em uma área livre do mapa do escritório.",
+      "Clique no avatar do Developer IA.",
+      "Observe o painel de agente selecionado."
+    ],
+    "expected": "O avatar do usuário muda de posição e o painel lateral mostra Developer IA e Tecnologia."
+  },
+  {
+    "name": "Executar uma missão até concluir",
+    "viewport": "desktop",
+    "covers": ["execução multiagente", "POST /api/missions/:id/step", "linha do tempo"],
+    "description": "Verifica que uma missão percorre as etapas e exibe os resultados no painel.",
+    "setup": ["Crie uma missão com o pedido \"Analise um problema de indicador e proponha uma solução\"."],
+    "steps": ["Se solicitado, aprove a missão.", "Clique em \"Executar missão\".", "Aguarde a conclusão."],
+    "expected": "A missão chega a 100% e exibe os resultados das etapas."
+  },
+  {
+    "name": "Bloquear pedido vazio no mobile",
+    "viewport": "mobile",
+    "covers": ["validação de pedido", "layout responsivo", "guardrail de formulário"],
+    "description": "Verifica a validação de pedido e o uso em tela móvel.",
+    "steps": ["Deixe o pedido vazio.", "Clique em \"Criar missão\".", "Observe a mensagem."],
+    "expected": "A interface mostra \"Digite um pedido para o Diretor IA.\" e não cria missão."
+  }
+]
