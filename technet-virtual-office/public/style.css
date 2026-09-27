@@ -14,7 +14,7 @@
 .world-agent{width:8%;height:13.5%}.world-sprite{background-size:550% 400%}
 /* Furniture depth follows floor position, so actors pass behind desks and the meeting table. */
 .furniture-depth{position:absolute;inset:0;background:url('/assets/office-empty.webp') center/100% 100% no-repeat;pointer-events:none}
-.world-agent[data-seated="true"] .world-sprite{transform:none!important}
+.world-agent[data-seated="true"] .world-sprite{transform-origin:center bottom}
 .workspace-switch{position:relative;gap:12px;padding:16px 12px;margin:0 0 26px;border:0;border-top:1px solid #31433c;border-bottom:1px solid #31433c;border-radius:0;background:transparent}
 .workspace-switch .workspace-icon{width:36px;height:42px;flex-shrink:0;background:linear-gradient(145deg,#2d4d3d,#20382c);border:1px solid #50775d;border-radius:9px;color:#b4e7c6}
 .workspace-icon .icon{width:20px;height:20px}

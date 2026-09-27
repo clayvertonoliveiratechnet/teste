@@ -48,3 +48,25 @@ test('profundidade da reunião e layout mobile permanecem legíveis', async ({br
   expect(paddingBottom).toBeGreaterThanOrEqual(88);
   await mobile.close();
 });
+test('cada cadeira aplica a pose sentada correta', async ({browser}) => {
+  const context = await browser.newContext({reducedMotion: 'reduce'});
+  const page = await context.newPage();
+  await page.goto('/');
+  const home = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.transform));
+  expect(home[0]).toContain('scale(0.92)');
+  expect(home[1]).toContain('scaleX(-1)');
+  expect(home[2]).toContain('scaleX(-1)');
+  expect(home[3]).not.toContain('scaleX(-1)');
+  expect(home[4]).not.toContain('scaleX(-1)');
+
+  await page.locator('#meetingButton').click();
+  await page.locator('#meetingAgenda').fill('Validar poses sentadas da equipe.');
+  await page.locator('#meetingForm button[type="submit"]').click();
+  await page.waitForTimeout(250);
+  const meeting = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.transform));
+  expect(meeting.every(value => value.includes('scale(0.8)'))).toBe(true);
+  expect(meeting[0]).toContain('scaleX(-1)');
+  expect(meeting[1]).toContain('scaleX(-1)');
+  expect(meeting[2]).not.toContain('scaleX(-1)');
+  await context.close();
+});
