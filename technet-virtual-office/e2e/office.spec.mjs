@@ -64,9 +64,13 @@ test('cada cadeira aplica a pose sentada correta', async ({browser}) => {
   await page.locator('#meetingForm button[type="submit"]').click();
   await page.waitForTimeout(250);
   const meeting = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.transform));
-  expect(meeting.every(value => value.includes('scale(0.8)'))).toBe(true);
+  expect(meeting.every(value => value.includes('scale(0.72)'))).toBe(true);
   expect(meeting[0]).toContain('scaleX(-1)');
   expect(meeting[1]).toContain('scaleX(-1)');
   expect(meeting[2]).not.toContain('scaleX(-1)');
+  const seats = await page.locator('.world-agent').evaluateAll(els => els.map(el => ({left: parseFloat(el.style.left), top: parseFloat(el.style.top), z: Number(el.style.zIndex)})));
+  expect(seats.filter(seat => seat.top >= 39)).toHaveLength(3);
+  expect(seats.filter(seat => seat.top < 35)).toHaveLength(2);
+  expect(Math.min(...seats.map((a, i) => Math.min(...seats.filter((_, j) => j !== i).map(b => Math.hypot(a.left - b.left, a.top - b.top)))))).toBeGreaterThan(5);
   await context.close();
 });
