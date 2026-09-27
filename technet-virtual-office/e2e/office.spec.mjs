@@ -27,3 +27,24 @@ test('layout não cria rolagem horizontal em desktop', async ({page}) => {
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
   expect(overflow).toBe(false);
 });
+test('profundidade da reunião e layout mobile permanecem legíveis', async ({browser}) => {
+  const desktop = await browser.newPage({viewport: {width: 1440, height: 900}});
+  await desktop.goto('/');
+  await expect(desktop.locator('.furniture-depth')).toHaveCount(6);
+  await desktop.locator('#meetingButton').click();
+  await desktop.locator('#meetingAgenda').fill('Validar visual da reunião sem balões sobrepostos.');
+  await desktop.locator('#meetingForm button[type="submit"]').click();
+  await expect(desktop.locator('.world-bubble')).toHaveText(['', '', '', '', '']);
+  await desktop.close();
+
+  const mobile = await browser.newPage({viewport: {width: 390, height: 844}});
+  await mobile.goto('/');
+  const queue = await mobile.locator('.queue-section').boundingBox();
+  const activity = await mobile.locator('.activity-section').boundingBox();
+  expect(queue.width).toBeGreaterThan(330);
+  expect(activity.width).toBeGreaterThan(330);
+  expect(activity.y).toBeGreaterThan(queue.y + queue.height - 2);
+  const paddingBottom = await mobile.locator('.workspace').evaluate(el => parseFloat(getComputedStyle(el).paddingBottom));
+  expect(paddingBottom).toBeGreaterThanOrEqual(88);
+  await mobile.close();
+});
