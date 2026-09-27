@@ -1,0 +1,30 @@
+import {spawn} from 'node:child_process';
+import {mkdtemp,rm,access} from 'node:fs/promises';
+import {tmpdir,homedir} from 'node:os';
+import path from 'node:path';
+import {agents} from '../public/agents.js';
+const ids=['codex','claude','antigravity'];
+const executable={codex:'codex',claude:'claude',antigravity:'agy'};
+const verified=new Set();let running=false;
+const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:{'Content-Type':'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});
+async function locate(id){if(!ids.includes(id))return null;const name=executable[id]+(process.platform==='win32'?'.exe':'');const dirs=[...(process.env.PATH||'').split(path.delimiter),path.join(homedir(),'.local','bin'),path.join(homedir(),'.cargo','bin'),...(process.env.LOCALAPPDATA?[path.join(process.env.LOCALAPPDATA,'agy','bin')]:[])];for(const dir of dirs){if(!dir)continue;const file=path.join(dir,name);try{await access(file,process.platform==='win32'?0:1);return file}catch{}}return null;}
+export function commandArgs(id,prompt){switch(id){case 'codex':return ['exec','--sandbox','read-only','--skip-git-repo-check','--ephemeral','-'];case 'claude':return ['-p','--output-format','json','--tools','','--disallowedTools','mcp__*','--no-session-persistence'];case 'antigravity':return ['-p',prompt,'--output-format','json','--sandbox','--print-timeout','110s'];default:throw Error('Conector inválido.')}}
+export function parseOutput(id,text){if(id==='codex')return text.trim();const data=JSON.parse(text);if(id==='claude'){if(data.is_error)throw Error('provider');return typeof data.result==='string'?data.result:''}if(data.status!=='SUCCESS')throw Error('provider');return typeof data.response==='string'?data.response:'';}
+export async function runAccount(id,prompt,{spawnProcess=spawn,locateExecutable=locate}={}){const file=await locateExecutable(id);if(!file)throw Error('Aplicativo oficial não encontrado. Instale a versão nativa e reinicie a central.');const cwd=await mkdtemp(path.join(tmpdir(),'technet-task-'));try{return await new Promise((resolve,reject)=>{const child=spawnProcess(file,commandArgs(id,prompt),{cwd,env:process.env,shell:false,windowsHide:true,detached:process.platform!=='win32',stdio:['pipe','pipe','pipe']});let output='',size=0,done=false;const stop=()=>{if(child.pid){if(process.platform==='win32'){spawn('taskkill',['/PID',String(child.pid),'/T','/F'],{windowsHide:true,stdio:'ignore'}).on('error',()=>child.kill())}else{try{process.kill(-child.pid,'SIGKILL')}catch{child.kill()}}}};const finish=(err,value)=>{if(done)return;done=true;clearTimeout(timer);err?reject(err):resolve(value)};const timer=setTimeout(()=>{stop();finish(Error('Tempo de resposta excedido. Verifique o aplicativo antes de tentar novamente.'))},115000);child.stdout.setEncoding('utf8');child.stdout.on('data',chunk=>{size+=Buffer.byteLength(chunk);if(size>2*1024*1024){stop();finish(Error('Resposta excedeu o limite. Peça uma entrega menor.'))}else output+=chunk.toString()});child.stderr.on('data',()=>{});child.stdin.on('error',()=>{});child.on('error',()=>finish(Error('Não foi possível iniciar o aplicativo oficial.')));child.on('close',code=>{if(code!==0){finish(Error('O aplicativo recusou a execução. Confira o login, a cota e a versão no terminal.'));return}try{const result=parseOutput(id,output);if(!result.trim())throw Error();finish(null,result)}catch{finish(Error('O aplicativo não retornou uma resposta válida. Verifique o login no terminal.'))}});child.stdin.end(id==='antigravity'?'':prompt);});}finally{await rm(cwd,{recursive:true,force:true})}}
+export async function localAccounts(request){const url=new URL(request.url);if(!url.pathname.startsWith('/api/'))return null;
+if(request.method==='GET'&&url.pathname==='/api/accounts')return json({local:true,accounts:await Promise.all(ids.map(async id=>({id,installed:!!await locate(id),verified:verified.has(id)})))});
+if(!['/api/accounts/test','/api/execute'].includes(url.pathname))return null;
+if(request.method!=='POST')return json({error:'Método não permitido.'},405);
+if(request.headers.get('Origin')!==url.origin)return json({error:'Origem não permitida.'},403);
+if(!request.headers.get('Content-Type')?.startsWith('application/json'))return json({error:'Envie JSON.'},415);
+let size=0,chunks=[];try{for await(const chunk of request.body){size+=chunk.length;if(size>32768)return json({error:'Pedido muito grande.'},413);chunks.push(chunk)}}catch{return json({error:'Pedido inválido.'},400)}let input;try{input=JSON.parse(Buffer.concat(chunks).toString())}catch{return json({error:'Pedido inválido.'},400)}
+if(!input||typeof input!=='object')return json({error:'Pedido inválido.'},400);
+// Server-provider requests are reconstructed because the body was consumed.
+if(url.pathname==='/api/execute'&&!input.connector)return {forward:new Request(request.url,{method:'POST',headers:request.headers,body:JSON.stringify(input)})};
+if(!ids.includes(input.connector))return json({error:'Conector inválido.'},400);
+const test=url.pathname==='/api/accounts/test',agent=agents.find(a=>a.id===input.agentId);
+if(!test&&(!agent||typeof input.prompt!=='string'||input.prompt.trim().length<8||input.prompt.length>6000))return json({error:'Pedido ou agente inválido.'},400);
+if(!test&&!verified.has(input.connector))return json({error:'Teste a conexão desta conta antes de executar.'},409);
+if(running)return json({error:'Aguarde a solicitação em andamento.'},409);running=true;
+try{const prompt=test?'Responda apenas: Conexão Technet pronta. Não utilize ferramentas.':`${agent.system}\nVocê está na Central Technet. Produza somente a entrega em português. Não execute ações externas nem use ferramentas.\nPedido: ${input.prompt}`;const output=await runAccount(input.connector,prompt);verified.add(input.connector);return json(test?{verified:true}:{output,provider:input.connector,model:executable[input.connector],agentId:agent.id})}catch(e){verified.delete(input.connector);return json({error:e.message},502)}finally{running=false}
+}

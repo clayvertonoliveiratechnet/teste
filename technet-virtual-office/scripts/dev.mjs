@@ -1,7 +1,10 @@
+import {fileURLToPath} from 'node:url';
 import {createServer} from 'node:http';
 import {createHandler} from '../worker/index.js';
+import {localAccounts} from './local-accounts.mjs';
 import {collectAssets} from './assets.mjs';
 const args=process.argv.slice(2);const option=(name,fallback)=>{const index=args.indexOf(name);return index<0?fallback:args[index+1]};
-const port=Number(option('--port',process.env.PORT||'4173'));const host=option('--host',process.env.HOST||'0.0.0.0');
-const server=createServer(async(req,res)=>{try{const assets=await collectAssets(new URL('../public/',import.meta.url).pathname);const headers=new Headers();for(const [key,value]of Object.entries(req.headers))if(value)headers.set(key,Array.isArray(value)?value.join(','):value);const request=new Request(`http://${req.headers.host||'localhost'}${req.url}`,{method:req.method,headers,...(!['GET','HEAD'].includes(req.method)?{body:req,duplex:'half'}:{})});const response=await createHandler(assets).fetch(request,process.env);res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));}catch{res.writeHead(500,{'Content-Type':'text/plain'});res.end('Não foi possível atender a solicitação.')}});
+const desktop=args.includes('--desktop');
+const port=Number(option('--port',process.env.PORT||'4173'));const host=option('--host',desktop?'127.0.0.1':(process.env.HOST||'0.0.0.0'));
+const server=createServer(async(req,res)=>{try{if(desktop&&!['127.0.0.1:'+port,'localhost:'+port].includes(req.headers.host)){res.writeHead(403);res.end('Host não permitido');return}const assets=await collectAssets(fileURLToPath(new URL('../public/',import.meta.url)));const headers=new Headers();for(const [key,value]of Object.entries(req.headers))if(value)headers.set(key,Array.isArray(value)?value.join(','):value);const request=new Request(`http://${req.headers.host||'localhost'}${req.url}`,{method:req.method,headers,...(!['GET','HEAD'].includes(req.method)?{body:req,duplex:'half'}:{})});const local=desktop?await localAccounts(request):null;const response=local instanceof Response?local:await createHandler(assets).fetch(local?.forward||request,process.env);res.writeHead(response.status,Object.fromEntries(response.headers));res.end(Buffer.from(await response.arrayBuffer()));}catch{res.writeHead(500,{'Content-Type':'text/plain'});res.end('Não foi possível atender a solicitação.')}});
 server.listen(port,host,()=>console.log(`Local: http://${host}:${port}/`));
