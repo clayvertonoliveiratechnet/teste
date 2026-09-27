@@ -1,22 +1,47 @@
-# Technet Space
+# Technet Central de IA — v2
 
-Protótipo navegável de escritório virtual inspirado na experiência de salas e presença do Gather, criado para a Technet. Projeto independente, sem uso de marca, código ou imagens do Gather.
+Escritório isométrico inspirado na referência visual enviada pelo usuário, com arte original. Cinco especialistas, mesas clicáveis, ordens, fila com pausa, atividade, histórico e resultados para copiar/baixar.
 
-## Rodar localmente
+## Executar
 
-```bash
-python3 -m http.server 4173
+Requer Node.js 22 ou superior; não há dependências de terceiros.
+
+```sh
+npm run dev
+# http://localhost:4173
+npm test
+npm run build
 ```
 
-Abra `http://localhost:4173`. Também pode ser hospedado em qualquer serviço de arquivos estáticos. Não há etapa de build.
+`public/` contém o frontend. `worker/index.js` implementa a API, compatível com Cloudflare Workers. `scripts/build.mjs` empacota a aplicação em `dist/server/` para Sites. O projeto publicado continua privado, usando a proteção de acesso da plataforma Sites.
 
-## O que funciona
+## Conectar a IA
 
-- Quatro salas (Central de controle, Comercial, Operações e Convivência), mapa interativo e avatar controlado por WASD, setas ou clique.
-- Quatro agentes representados no escritório; recomendação de encaminhamento por palavras do pedido.
-- Registro de pedidos, painel de atividade e chat por sala, persistidos apenas no `localStorage` deste navegador.
-- Layout para desktop e celular.
+Configure segredos apenas no ambiente do servidor. **Nunca coloque uma chave em `public/`, no navegador ou em um commit.**
 
-## Limites desta versão
+| Variável | Valor |
+|---|---|
+| `AI_PROVIDER` | `groq` ou `openai` |
+| `AI_MODEL` | ID de um modelo de chat disponível na conta escolhida |
+| `GROQ_API_KEY` | Chave secreta para Groq (se escolhido) |
+| `OPENAI_API_KEY` | Chave secreta para OpenAI (se escolhido) |
+| `AI_MODEL_ADA`, `AI_MODEL_LUNA`, `AI_MODEL_ATLAS`, `AI_MODEL_DAVI`, `AI_MODEL_MAYA` | Opcional: modelo específico por especialista, do mesmo provedor |
 
-Os agentes são representações visuais. O pedido é registrado e recebe uma **sugestão local**, mas nenhuma IA externa o executa. O chat é local; ainda não há sincronização entre usuários, autenticação, vídeo, áudio ou comunicação por proximidade. Para uso real da empresa, conectar uma API de execução de agentes e um backend com autenticação, presença e mensagens em tempo real. Nunca colocar chaves de API no JavaScript do navegador.
+Para desenvolvimento, exporte as variáveis no terminal antes de iniciar `npm run dev`. Na publicação Sites, configure essas variáveis usando os segredos do projeto. Após configurar, clique em **Configurações → Verificar conexão**. Essa verificação confirma a presença da configuração; validade da chave e acesso ao modelo são verificados na primeira execução real.
+
+O botão **Enviar ordem** sugere o especialista por termos do pedido e envia o contexto e a ordem ao provedor. Uma resposta válida produz uma entrega. Erros e falta de conexão ficam explícitos. Pedidos antigos só executam após clicar em **Executar pedido**; nenhuma conexão dispara retroativamente pedidos antigos. A fila executa uma tarefa por vez nesta sessão.
+
+## Limites atuais
+
+- A arte do escritório é um cenário com personagens desenhados; os status, atividades e controles são interativos. Não há circulação de avatares independentes.
+- Ordens, resultados e histórico ficam no `localStorage` deste navegador; não há sincronização entre PCs.
+- Os agentes geram texto/código. Não acessam automaticamente GitHub, WhatsApp ou outros sistemas da empresa, não alteram arquivos e não executam código gerado.
+- Sem credencial/modelo configurados, ordens ficam aguardando conexão. **Ver em ação** é uma demonstração claramente identificada, não uma execução real de IA.
+- Pausar bloqueia novas execuções; não interrompe uma requisição já enviada. Fechar a página interrompe o acompanhamento, e o provedor pode ter processado o pedido; repetir pode gerar outra cobrança.
+- O servidor de desenvolvimento escuta em `0.0.0.0` para a prévia interna. Para uso exclusivamente local: `npm run dev -- --host 127.0.0.1`. Não exponha esse servidor com uma chave ativa à internet sem autenticação. No Sites, preserve o acesso privado.
+
+## Verificação
+
+`npm test` cobre seleção de agentes, requisições inválidas, origem, limite de corpo, ausência de configuração, resposta de provedor simulada, falhas sem vazamento de diagnóstico e arquivos servidos. A execução contra OpenAI/Groq depende da credencial da conta e não foi realizada nesta entrega.
+
+Arte: imagem original gerada por IA a partir da direção visual do usuário. Sem uso de código ou assets do Habbo.
