@@ -1,0 +1,13 @@
+{
+  "hosting": [
+    {
+      "target": "technet-space",
+      "public": "public",
+      "ignore": [
+        "firebase.json",
+        "**/.*",
+        "**/node_modules/**"
+      ]
+    }
+  ]
+}

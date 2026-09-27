@@ -7,9 +7,16 @@
     "dev": "node scripts/dev.mjs",
     "build": "node scripts/build.mjs",
     "test": "node --test tests/*.test.mjs",
-    "desktop": "node scripts/dev.mjs --desktop --host 127.0.0.1"
+    "desktop": "node scripts/dev.mjs --desktop --host 127.0.0.1",
+    "test:e2e": "playwright test",
+    "verify": "npm test && npm run test:e2e",
+    "deploy:firebase": "npm run verify && npm run build && firebase deploy --only hosting:technet-space --project technet-institucional-2026"
   },
   "engines": {
     "node": ">=22"
+  },
+  "devDependencies": {
+    "@dietrichgebert/ponytail": "^4.10.0",
+    "@playwright/test": "^1.63.0"
   }
 }

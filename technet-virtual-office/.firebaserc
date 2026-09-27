@@ -1,0 +1,14 @@
+{
+  "projects": {
+    "default": "technet-institucional-2026"
+  },
+  "targets": {
+    "technet-institucional-2026": {
+      "hosting": {
+        "technet-space": [
+          "technet-space-2026"
+        ]
+      }
+    }
+  }
+}

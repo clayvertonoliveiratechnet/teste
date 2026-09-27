@@ -7,3 +7,5 @@ node_modules/
 .qodo/
 
 public/downloads/
+test-results/
+playwright-report/
