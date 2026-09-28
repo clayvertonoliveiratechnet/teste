@@ -97,3 +97,41 @@ body{background:radial-gradient(circle at 72% 8%,#1d3430 0,#0f1718 33%,#0b1214 1
   .room-nav{display:none}
   .room-dock{position:relative;z-index:3}
 }
+/* === World-first layout v2 === */
+@media(min-width:961px){
+  .main-layout{display:block;padding:22px 26px 0}
+  .main-column{max-width:none;width:100%}
+  .office-view{max-width:1500px;margin:0 auto}
+  .view-heading{max-width:1180px}
+  .scene-viewport{aspect-ratio:1.72;max-height:none}
+  .office-card{width:100%}
+}
+.hud-top-button{display:flex;align-items:center;gap:7px;border:1px solid #48685c;border-radius:7px;padding:7px 10px;background:#1d312b;color:#c8ded3;font-size:10px;box-shadow:0 2px 0 #091210}
+.hud-top-button:hover,.hud-top-button.active{background:#345b46;border-color:#78a985;color:#fff}.hud-top-button .icon{width:14px;height:14px}
+.space-hud{position:absolute;left:14px;top:14px;z-index:12;display:flex;gap:6px;padding:6px;border:1px solid #466057;border-radius:10px;background:#10191cdd;backdrop-filter:blur(8px);box-shadow:0 5px 0 #07101299}
+.space-hud button{display:flex;align-items:center;gap:6px;padding:7px 9px;border-radius:6px;color:#b8c9c1;font-size:9px}
+.space-hud button:hover{background:#2a4438;color:#fff}.space-hud button span{color:#f0c977;font-size:13px}.space-hud button strong{font-weight:650}
+
+.room-map-panel{position:absolute;inset:50% auto auto 50%;transform:translate(-50%,-50%);z-index:30;width:min(760px,86%);padding:12px;border:1px solid #688276;border-radius:14px;background:#10191cea;backdrop-filter:blur(14px);box-shadow:0 25px 90px #000a,0 5px 0 #060d0d}
+.room-map-head{display:flex;align-items:center;justify-content:space-between;padding:6px 7px 12px}.room-map-head>span{display:flex;flex-direction:column;gap:2px}.room-map-head b{font:700 16px 'Space Grotesk',sans-serif}.room-map-head small{font-size:9px;color:#90a69e}.room-map-head button{width:28px;height:28px;border:1px solid #425c54;border-radius:7px;background:#182725;color:#a8bbb4;font-size:18px}
+.room-map-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.room-map-grid>button{padding:0;overflow:hidden;text-align:left;border:1px solid #3b554d;border-radius:10px;background:#152221;box-shadow:0 3px 0 #091110}
+.room-map-grid>button:hover,.room-map-grid>button.active{border-color:#8ab894;background:#20382f;transform:translateY(-2px)}.room-map-grid img{display:block;width:100%;height:110px;object-fit:cover;filter:saturate(.92) brightness(.9)}.room-map-grid>button>span{display:flex;flex-direction:column;gap:3px;padding:9px 10px}.room-map-grid strong{font:650 11px 'Space Grotesk',sans-serif}.room-map-grid small{font-size:8px;color:#869d94}
+.command-drawer{position:fixed!important;right:18px;top:82px;width:min(365px,calc(100vw - 36px));max-height:calc(100vh - 100px);overflow:auto;z-index:40;margin:0!important;box-shadow:0 28px 80px #0009,0 5px 0 #071010;transition:transform .22s ease,opacity .18s ease}
+.command-drawer.collapsed{transform:translateX(calc(100% + 28px));opacity:0;pointer-events:none}
+.command-drawer-close{position:absolute;right:11px;top:9px;z-index:3;width:25px;height:25px;border:1px solid #3b534c;border-radius:6px;background:#172522;color:#9eb0a9;font-size:18px}
+.command-drawer .center-header{padding-right:45px}
+
+@media(min-width:961px){
+  .command-card{max-width:980px;margin:16px auto 0}
+  .meeting-panel{max-width:980px;margin:16px auto 0}
+}
+@media(max-width:960px){
+  .command-drawer{position:fixed!important;right:10px;left:10px;top:auto;bottom:82px;width:auto;max-height:72vh}
+  .command-drawer.collapsed{transform:translateY(calc(100% + 100px))}
+}
+@media(max-width:680px){
+  .hud-top-button span{display:none}.hud-top-button{width:28px;height:28px;padding:0;justify-content:center;border-radius:50%}
+  .space-hud{left:8px;top:8px;padding:4px;gap:2px}.space-hud button{padding:5px 6px}.space-hud button strong{display:none}
+  .room-map-panel{width:94%;padding:8px}.room-map-grid{grid-template-columns:1fr;max-height:54vh;overflow:auto}.room-map-grid>button{display:grid;grid-template-columns:110px 1fr}.room-map-grid img{height:72px}
+  .command-drawer{bottom:76px;left:7px;right:7px;max-height:72vh}
+}

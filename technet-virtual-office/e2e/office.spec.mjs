@@ -102,3 +102,19 @@ test('navegador de salas troca Lobby, Central e Reunião sem recarregar', async 
   await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/rooms/meeting.webp');
   await expect(page.locator('#meetingRoomOverlay')).toBeVisible();
 });
+test('HUD abre mapa de salas e Central como gaveta flutuante', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#commandCenter')).toHaveClass(/collapsed/);
+  await page.locator('#commandToggle').click();
+  await expect(page.locator('#commandCenter')).not.toHaveClass(/collapsed/);
+  await expect(page.locator('#commandToggle')).toHaveAttribute('aria-expanded', 'true');
+  await page.locator('#commandDrawerClose').click();
+  await expect(page.locator('#commandCenter')).toHaveClass(/collapsed/);
+
+  await page.locator('#hudMap').click();
+  await expect(page.locator('#roomMapPanel')).toBeVisible();
+  await expect(page.locator('.room-map-grid > button')).toHaveCount(3);
+  await page.locator('.room-map-grid > button[data-room="lobby"]').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
+  await expect(page.locator('#roomMapPanel')).toBeHidden();
+});
