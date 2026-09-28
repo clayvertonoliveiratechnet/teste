@@ -209,3 +209,29 @@ html,body{width:100%;height:100%;overflow:hidden;background:#070a0d}
 
 .hotel-room-action{position:fixed;z-index:45;right:18px;top:16px;padding:8px 12px;border:2px solid #526f7d;border-radius:5px;background:linear-gradient(#dce7eb,#b7c7cd);color:#263a43;font:700 11px Arial,sans-serif;box-shadow:0 2px 0 #2a414b}
 .hotel-room-action:hover{background:#eef4f6}
+.hotel-player{transition:none!important}
+.hotel-player-sprite{background-repeat:no-repeat;transform-origin:center bottom}
+.hotel-player.moving .hotel-player-sprite{filter:drop-shadow(0 3px 2px #0008)}
+.hotel-player.sitting{transform:translate(-50%,-93%)}
+.hotel-player-bubble,.hotel-peer-bubble{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);max-width:180px;padding:5px 8px;border:1px solid #718892;border-radius:9px;background:#f5f7f8;color:#26343a;font:11px Arial,sans-serif;white-space:nowrap;box-shadow:0 2px 0 #44545b88;pointer-events:none}
+.hotel-player-bubble{margin-bottom:24px}
+.hotel-peer{position:absolute;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;z-index:800;pointer-events:none;transition:left .14s linear,top .14s linear}
+.hotel-peer-sprite{display:block;width:44px;height:58px;background-image:url('/assets/avatars.webp');background-size:550% 400%;background-repeat:no-repeat;transform-origin:center bottom}
+.hotel-peer>b{margin-top:-1px;padding:2px 5px;border:1px solid #315e70;border-radius:3px;background:#236985;color:#fff;font:700 8px Arial,sans-serif;box-shadow:0 1px #0006}
+.hotel-peer-bubble{bottom:74px}
+
+.hotel-portal{position:absolute;transform:translate(-50%,-100%);z-index:500;display:flex;align-items:center;gap:4px;padding:4px 6px;border:1px solid #738996;border-radius:5px;background:#dce6eaee;color:#263b45;font:10px Arial,sans-serif;box-shadow:0 2px 0 #314852,0 5px 10px #0005}
+.hotel-portal:hover{background:#eff5f7}.hotel-portal span{font-size:13px;color:#3c7389}.hotel-portal b{font-weight:700}
+.hotel-interact-hint{position:absolute;transform:translate(-50%,-100%);z-index:1500;padding:4px 7px;border:1px solid #d9bb66;border-radius:5px;background:#2c281bdd;color:#fff3c4;font:700 9px Arial,sans-serif;white-space:nowrap;box-shadow:0 2px 0 #171308aa;pointer-events:none}
+.hotel-control-hint{position:fixed;z-index:42;left:18px;top:68px;padding:5px 8px;border:1px solid #445b66;border-radius:4px;background:#19272ddd;color:#b8c9d0;font:9px Arial,sans-serif;box-shadow:0 2px 0 #0b1317}
+.hotel-chat-line.peer{border-color:#65a1b5;background:#e8f5fa}.hotel-chat-line.system{border-color:#a89b6b;background:#fff8dc;color:#554a29}
+
+.hotel-profile-edit{display:grid;grid-template-columns:1fr 72px;gap:6px;padding:0 12px 12px;background:#eef3f5}
+.hotel-profile-edit label{grid-column:1/-1;font:700 9px Arial,sans-serif;color:#607984}
+.hotel-profile-edit input{height:28px;border:1px solid #8ba0a9;border-radius:4px;padding:0 7px;font:11px Arial,sans-serif;color:#263a43;background:#fff}
+.hotel-profile-edit button{border:1px solid #607d89;border-radius:4px;background:linear-gradient(#d7e3e7,#b7c8cf);color:#29404a;font:700 9px Arial,sans-serif}
+@media(max-width:700px){
+ .hotel-control-hint{display:none}
+ .hotel-portal{font-size:8px;padding:3px 5px}
+ .hotel-player-bubble,.hotel-peer-bubble{max-width:130px;font-size:9px}
+}

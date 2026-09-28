@@ -92,3 +92,56 @@ test('layout do hotel não cria rolagem horizontal em desktop ou mobile', async 
     await page.close();
   }
 });
+test('avatar responde a WASD e click-to-walk respeitando os limites da sala', async ({page}) => {
+  await page.goto('/');
+  const start = await page.evaluate(() => window.__hotelWorld.state);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(700);
+  await page.keyboard.up('d');
+  await page.waitForTimeout(120);
+  const afterKey = await page.evaluate(() => window.__hotelWorld.state);
+  expect(afterKey.x).toBeGreaterThan(start.x + 3);
+
+  await page.evaluate(() => window.__hotelWorld.goTo(56, 73));
+  await page.waitForTimeout(1800);
+  const afterClick = await page.evaluate(() => window.__hotelWorld.state);
+  expect(Math.abs(afterClick.x - 56)).toBeLessThanOrEqual(2.1);
+  expect(Math.abs(afterClick.y - 73)).toBeLessThanOrEqual(2.1);
+
+  await page.keyboard.down('d');
+  await page.waitForTimeout(6000);
+  await page.keyboard.up('d');
+  const bounded = await page.evaluate(() => window.__hotelWorld.state);
+  expect(bounded.x).toBeLessThan(96);
+});
+
+test('portas e interação E permitem trocar de sala e sentar', async ({page}) => {
+  await page.goto('/');
+  await page.locator('.hotel-portal').first().click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
+
+  await page.locator('#hotelNavigatorButton').click();
+  await page.locator('.hotel-room-list > button[data-room="cafe"]').click();
+  await page.evaluate(() => window.__hotelWorld.goTo(57, 55));
+  await page.waitForTimeout(2600);
+  await page.keyboard.press('e');
+  await expect.poll(async () => (await page.evaluate(() => window.__hotelWorld.state)).sitting).toBe(true);
+  await page.keyboard.press('e');
+  await expect.poll(async () => (await page.evaluate(() => window.__hotelWorld.state)).sitting).toBe(false);
+});
+
+test('chat e perfil acompanham o avatar controlável', async ({page}) => {
+  await page.goto('/');
+  await page.locator('#hotelProfileButton').click();
+  await page.locator('#hotelProfileName').fill('Clay Teste');
+  await page.locator('#hotelProfileSave').click();
+  await expect(page.locator('#playerAvatar b')).toHaveText('Clay Teste');
+
+  await page.locator('#hotelChatInput').fill('/where');
+  await page.locator('#hotelChatSend').click();
+  await expect(page.locator('.hotel-chat-line.system').last()).toContainText('central');
+
+  await page.locator('#hotelChatInput').fill('Olá equipe');
+  await page.locator('#hotelChatSend').click();
+  await expect(page.locator('.hotel-player-bubble')).toHaveText('Olá equipe');
+});

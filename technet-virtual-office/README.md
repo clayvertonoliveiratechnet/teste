@@ -37,7 +37,7 @@ npm test
 npm run build
 ```
 
-Sem dependências externas. `public/` contém a interface; `public/world.js` controla rotas e animação; `worker/index.js` contém a API remota; `scripts/local-accounts.mjs` é o adaptador local. O build gera o ZIP local e o Worker em `dist/server/`. O projeto Sites preserva seu acesso privado.
+`public/` contém a interface; `public/world.js` controla os agentes e `public/hotel-world.js` controla o avatar do usuário, colisões, pathfinding, portas, assentos e presença multiplayer. O cliente usa Supabase Realtime Presence/Broadcast com chave publicável para sincronizar apenas presença, movimento e chat do Technet Space; nenhuma tabela do projeto COMERCIAL é criada ou alterada. `worker/index.js` contém a API remota e `scripts/local-accounts.mjs` é o adaptador local.
 
 ### API hospedada
 
@@ -54,7 +54,7 @@ Configure somente no servidor: `AI_PROVIDER` (`openai` ou `groq`), `AI_MODEL` e 
 
 ## Verificação
 
-14 testes automatizados: API, roteamento, limites, origem, falhas, serialização de CLI, execução sem shell e caminhos de ida/volta da reunião. Interface verificada em navegador. Autenticação e chamadas reais das três contas dependem do computador do usuário e não foram validadas com suas credenciais nesta entrega.
+24 verificações automatizadas: 14 testes internos de API/roteamento/segurança/rotas e 10 testes Playwright do cliente do hotel, incluindo salas, chat, avatar, WASD, click-to-walk, colisão, portas, sentar/levantar e janelas flutuantes. O multiplayer Realtime também foi validado manualmente com dois contextos de navegador simultâneos.
 
 Referências oficiais consultadas em setembro de 2026:
 - https://developers.openai.com/codex/noninteractive
@@ -65,3 +65,12 @@ Referências oficiais consultadas em setembro de 2026:
 Arte original gerada por IA. Sem copiar código, marca ou assets do Habbo.
 
 Correção de circulação: corredores externos às baias, assentos como destinos finais, orientação fixa ao sentar e camadas dos móveis por profundidade. Testes verificam que trajetos não atravessam as superfícies das mesas.
+
+## Cliente do hotel e controles
+
+- **WASD** ou **setas** movimentam o avatar; clicar no piso calcula uma rota com A* e desvia das áreas bloqueadas.
+- **E** interage com o objeto mais próximo: senta/levanta ou atravessa uma porta para a sala conectada.
+- O Navegador possui Lobby, Central de IA, Reunião, Comercial, NOC/Operações e Café & Lounge.
+- O chat aparece sobre o avatar e é transmitido aos usuários conectados à mesma sala. Comandos disponíveis: `/where`, `/sit`, `/stand` e `/help`.
+- O perfil permite alterar o nome exibido no hotel. O nome é armazenado localmente no navegador.
+- Presença multiplayer usa canais Realtime isolados no formato `technet-space:<sala>`, sem gravar dados de negócio em tabelas do Supabase.
