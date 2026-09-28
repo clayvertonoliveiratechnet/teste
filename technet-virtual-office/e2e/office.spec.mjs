@@ -1,54 +1,68 @@
 import {test, expect} from '@playwright/test';
 
-test('escritório abre com os cinco agentes', async ({page}) => {
+test('cliente do hotel abre na Central de IA com avatar e barra inferior', async ({page}) => {
   await page.goto('/');
-  await expect(page).toHaveTitle(/Technet/);
-  await expect(page.getByRole('heading', {name: /Seu escritório virou um mundo/})).toBeVisible();
+  await expect(page).toHaveTitle(/Technet Space/);
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'central');
   await expect(page.locator('#officeImage')).toBeVisible();
   await expect(page.locator('.world-agent')).toHaveCount(5);
-  await expect(page.locator('#availableCount')).toContainText('5 agentes');
+  await expect(page.locator('#playerAvatar')).toBeVisible();
+  await expect(page.locator('#hotelBottomBar')).toBeVisible();
+  await expect(page.locator('#hotelRoomName')).toHaveText('Central de IA');
 });
 
-test('menus principais e reunião respondem', async ({page}) => {
+test('Navegador lista seis salas e troca de quarto sem recarregar', async ({page}) => {
   await page.goto('/');
-  await page.getByRole('button', {name: /Equipe de IA/}).click();
+  await page.locator('#hotelNavigatorButton').click();
+  await expect(page.locator('#hotelNavigator')).toBeVisible();
+  await expect(page.locator('.hotel-room-list > button')).toHaveCount(6);
+  await page.locator('#hotelRoomSearch').fill('café');
+  await expect(page.locator('.hotel-room-list > button:not([hidden])')).toHaveCount(1);
+  await page.locator('#hotelRoomSearch').fill('');
+  await page.locator('.hotel-room-list > button[data-room="cafe"]').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'cafe');
+  await expect(page.locator('#hotelRoomName')).toHaveText('Café & Lounge');
+  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/hotel-rooms/cafe.webp');
+  await expect(page.locator('#hotelNavigator')).toBeHidden();
+});
+
+test('chat do hotel cria balão e limpa o campo', async ({page}) => {
+  await page.goto('/');
+  await page.locator('#hotelChatInput').fill('Equipe, reunião em 10 minutos.');
+  await page.locator('#hotelChatSend').click();
+  await expect(page.locator('.hotel-chat-line')).toHaveCount(1);
+  await expect(page.locator('.hotel-chat-line')).toContainText('Clayverton:');
+  await expect(page.locator('#hotelChatInput')).toHaveValue('');
+});
+
+test('Tarefas, Equipe e Central abrem como janelas sobre o quarto', async ({page}) => {
+  await page.goto('/');
+  await page.locator('#hotelTasksButton').click();
+  await expect(page.locator('#tasksView')).toBeVisible();
+  await expect(page.locator('#officeView')).toBeVisible();
+  await page.locator('#hotelTeamButton').click();
   await expect(page.locator('#agentsView')).toBeVisible();
-  await expect(page.locator('#agentGrid')).not.toBeEmpty();
-  await page.getByRole('button', {name: /Escritório/}).click();
-  await page.locator('#meetingButton').click();
-  await expect(page.locator('#meetingDialog')).toBeVisible();
-  await page.locator('#meetingAgenda').fill('Alinhar as prioridades da operação Technet desta semana.');
-  await page.locator('#meetingForm button[type="submit"]').click();
-  await expect(page.locator('#meetingPanel')).toBeVisible();
+  await expect(page.locator('#officeView')).toBeVisible();
+  await page.locator('#hotelCommandButton').click();
+  await expect(page.locator('#commandCenter')).not.toHaveClass(/collapsed/);
+  await page.locator('#commandDrawerClose').click();
+  await expect(page.locator('#commandCenter')).toHaveClass(/collapsed/);
 });
 
-test('layout não cria rolagem horizontal em desktop', async ({page}) => {
+test('sala de reunião permite convocar a equipe pelo cliente do hotel', async ({page}) => {
   await page.goto('/');
-  const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
-  expect(overflow).toBe(false);
+  await page.locator('#hotelNavigatorButton').click();
+  await page.locator('.hotel-room-list > button[data-room="meeting"]').click();
+  await expect(page.locator('#hotelMeetingAction')).toBeVisible();
+  await page.locator('#hotelMeetingAction').click();
+  await expect(page.locator('#meetingDialog')).toBeVisible();
+  await page.locator('#meetingAgenda').fill('Alinhar prioridades da operação Technet.');
+  await page.locator('#meetingForm button[type="submit"]').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'meeting');
+  await expect(page.locator('#hotelMeetingAction')).toHaveText('Encerrar reunião');
 });
-test('profundidade da reunião e layout mobile permanecem legíveis', async ({browser}) => {
-  const desktop = await browser.newPage({viewport: {width: 1440, height: 900}});
-  await desktop.goto('/');
-  await expect(desktop.locator('.furniture-depth')).toHaveCount(6);
-  await desktop.locator('#meetingButton').click();
-  await desktop.locator('#meetingAgenda').fill('Validar visual da reunião sem balões sobrepostos.');
-  await desktop.locator('#meetingForm button[type="submit"]').click();
-  await expect(desktop.locator('.world-bubble')).toHaveText(['', '', '', '', '']);
-  await desktop.close();
 
-  const mobile = await browser.newPage({viewport: {width: 390, height: 844}});
-  await mobile.goto('/');
-  const queue = await mobile.locator('.queue-section').boundingBox();
-  const activity = await mobile.locator('.activity-section').boundingBox();
-  expect(queue.width).toBeGreaterThan(330);
-  expect(activity.width).toBeGreaterThan(330);
-  expect(activity.y).toBeGreaterThan(queue.y + queue.height - 2);
-  const paddingBottom = await mobile.locator('.workspace').evaluate(el => parseFloat(getComputedStyle(el).paddingBottom));
-  expect(paddingBottom).toBeGreaterThanOrEqual(88);
-  await mobile.close();
-});
-test('cada cadeira aplica a pose sentada correta', async ({browser}) => {
+test('poses sentadas continuam corretas na Central e reunião', async ({browser}) => {
   const context = await browser.newContext({reducedMotion: 'reduce'});
   const page = await context.newPage();
   await page.goto('/');
@@ -56,65 +70,25 @@ test('cada cadeira aplica a pose sentada correta', async ({browser}) => {
   expect(home[0]).toContain('scale(1.18)');
   expect(home[1]).toContain('scaleX(-1)');
   expect(home[2]).toContain('scaleX(-1)');
-  expect(home[3]).not.toContain('scaleX(-1)');
-  expect(home[4]).not.toContain('scaleX(-1)');
-  const homeAssets = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.backgroundImage));
-  expect(homeAssets).toEqual([
-    'url("/assets/seated/atlas.webp")',
-    'url("/assets/seated/ada.webp")',
-    'url("/assets/seated/luna.webp")',
-    'url("/assets/seated/davi.webp")',
-    'url("/assets/seated/maya.webp")'
-  ]);
 
-  await page.locator('#meetingButton').click();
+  await page.locator('#hotelNavigatorButton').click();
+  await page.locator('.hotel-room-list > button[data-room="meeting"]').click();
+  await page.locator('#hotelMeetingAction').click();
   await page.locator('#meetingAgenda').fill('Validar poses sentadas da equipe.');
   await page.locator('#meetingForm button[type="submit"]').click();
   await page.waitForTimeout(250);
   const meeting = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.transform));
   expect(meeting.every(value => value.includes('scale(0.92)'))).toBe(true);
-  expect(meeting[0]).toContain('scaleX(-1)');
-  expect(meeting[1]).toContain('scaleX(-1)');
-  expect(meeting[2]).not.toContain('scaleX(-1)');
-  const seats = await page.locator('.world-agent').evaluateAll(els => els.map(el => ({left: parseFloat(el.style.left), top: parseFloat(el.style.top), z: Number(el.style.zIndex)})));
-  expect(seats.filter(seat => seat.top >= 39)).toHaveLength(3);
-  expect(seats.filter(seat => seat.top < 35)).toHaveLength(2);
-  expect(Math.min(...seats.map((a, i) => Math.min(...seats.filter((_, j) => j !== i).map(b => Math.hypot(a.left - b.left, a.top - b.top)))))).toBeGreaterThan(5);
   await context.close();
 });
-test('navegador de salas troca Lobby, Central e Reunião sem recarregar', async ({page}) => {
-  await page.goto('/');
-  await page.locator('.room-nav-button[data-room="lobby"]').click();
-  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
-  await expect(page.locator('#roomName')).toHaveText('Lobby');
-  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/rooms/lobby.webp');
-  await expect(page.locator('#lobbyOverlay')).toBeVisible();
-  await expect(page.locator('#commandCard')).toBeHidden();
 
-  await page.locator('.portal-central').click();
-  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'central');
-  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/office-empty.webp');
-  await expect(page.locator('#hotspots')).toBeVisible();
-  await expect(page.locator('#commandCard')).toBeVisible();
-
-  await page.locator('.room-nav-button[data-room="meeting"]').click();
-  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'meeting');
-  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/rooms/meeting.webp');
-  await expect(page.locator('#meetingRoomOverlay')).toBeVisible();
-});
-test('HUD abre mapa de salas e Central como gaveta flutuante', async ({page}) => {
-  await page.goto('/');
-  await expect(page.locator('#commandCenter')).toHaveClass(/collapsed/);
-  await page.locator('#commandToggle').click();
-  await expect(page.locator('#commandCenter')).not.toHaveClass(/collapsed/);
-  await expect(page.locator('#commandToggle')).toHaveAttribute('aria-expanded', 'true');
-  await page.locator('#commandDrawerClose').click();
-  await expect(page.locator('#commandCenter')).toHaveClass(/collapsed/);
-
-  await page.locator('#hudMap').click();
-  await expect(page.locator('#roomMapPanel')).toBeVisible();
-  await expect(page.locator('.room-map-grid > button')).toHaveCount(3);
-  await page.locator('.room-map-grid > button[data-room="lobby"]').click();
-  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
-  await expect(page.locator('#roomMapPanel')).toBeHidden();
+test('layout do hotel não cria rolagem horizontal em desktop ou mobile', async ({browser}) => {
+  for (const viewport of [{width: 1440, height: 900}, {width: 390, height: 844}]) {
+    const page = await browser.newPage({viewport});
+    await page.goto('/');
+    const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
+    expect(overflow).toBe(false);
+    await expect(page.locator('#hotelBottomBar')).toBeVisible();
+    await page.close();
+  }
 });

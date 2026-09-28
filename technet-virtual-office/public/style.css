@@ -135,3 +135,77 @@ body{background:radial-gradient(circle at 72% 8%,#1d3430 0,#0f1718 33%,#0b1214 1
   .room-map-panel{width:94%;padding:8px}.room-map-grid{grid-template-columns:1fr;max-height:54vh;overflow:auto}.room-map-grid>button{display:grid;grid-template-columns:110px 1fr}.room-map-grid img{height:72px}
   .command-drawer{bottom:76px;left:7px;right:7px;max-height:72vh}
 }
+/* === Technet Hotel / classic social-room client === */
+html,body{width:100%;height:100%;overflow:hidden;background:#070a0d}
+.sidebar,.topbar,.view-heading,.room-dock,.world-controls,.office-footer,.command-card,.app-footer,.space-hud,.room-map-panel{display:none!important}
+.workspace{margin:0!important;width:100vw!important;height:100vh!important;min-height:0!important;background:#070a0d}
+.main-layout{display:block!important;padding:0!important;height:100vh!important;overflow:hidden}
+.main-column{width:100%!important;max-width:none!important;height:100%!important}
+.office-view{display:block!important;position:fixed;inset:0 0 58px 0;padding:0!important;margin:0!important;max-width:none!important}
+.office-card{position:absolute!important;inset:0!important;width:auto!important;height:auto!important;margin:0!important;border:0!important;border-radius:0!important;background:#070a0d!important;box-shadow:none!important;overflow:hidden}
+.office-toolbar{position:absolute!important;z-index:28;top:10px;left:50%;transform:translateX(-50%);width:auto!important;min-width:280px;padding:7px 12px!important;border:2px solid #506b78!important;border-radius:7px!important;background:linear-gradient(#d9e4e8,#aebfc6)!important;color:#20313a!important;box-shadow:0 2px 0 #263e49,0 5px 14px #0007!important}
+.office-title{color:#20313a!important}.office-title .icon{display:none}.office-title strong{font:700 13px Arial,sans-serif!important}.floor-tag{background:#7c99a7!important;color:#fff!important;border-color:#607d8b!important}
+.office-status{color:#365761!important;font-size:10px!important}.office-status .status-light{background:#55b970!important}
+
+.scene-viewport{position:absolute!important;inset:0!important;height:auto!important;max-height:none!important;aspect-ratio:auto!important;border:0!important;background:radial-gradient(circle at 50% 42%,#1a2328 0,#0a0e11 58%,#030506 100%)!important;display:flex!important;align-items:center!important;justify-content:center!important;overflow:hidden!important}
+.scene{position:relative!important;width:min(94vw,1536px)!important;height:auto!important;aspect-ratio:3/2!important;transform-origin:center center!important;background:transparent!important}
+.scene>img{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;object-fit:contain!important;image-rendering:auto}
+.scene-caption{display:none!important}.welcome-sign{display:none!important}
+.zoom-controls{right:14px!important;bottom:14px!important;z-index:26!important}
+.zoom-controls button{background:#c6d2d7!important;color:#263b45!important;border-color:#637b86!important}
+.hotel-room-info{position:fixed;z-index:42;left:18px;top:16px;display:flex;flex-direction:column;gap:2px;min-width:185px;padding:7px 10px;border:2px solid #526d7a;border-radius:6px;background:linear-gradient(#dce7eb,#b7c7cd);color:#233640;box-shadow:0 2px 0 #2a414b,0 5px 12px #0006}
+.hotel-room-info strong{font:700 12px Arial,sans-serif}.hotel-room-info span{font:10px Arial,sans-serif;color:#4f6974}
+.hotel-chat-feed{position:fixed;z-index:43;left:50%;bottom:72px;transform:translateX(-50%);width:min(720px,75vw);display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none}
+.hotel-chat-line{max-width:80%;padding:6px 10px;border:1px solid #78909a;border-radius:10px;background:#f4f7f7;color:#26353b;font:12px Arial,sans-serif;box-shadow:0 2px 0 #455a64aa}
+.hotel-chat-line b{color:#325f74}
+
+.hotel-bottom-bar{position:fixed;z-index:60;left:0;right:0;bottom:0;height:58px;display:grid;grid-template-columns:58px 72px 64px minmax(240px,1fr) 64px 64px;align-items:center;gap:5px;padding:0 10px;background:linear-gradient(#354b57,#243640);border-top:2px solid #66808c;box-shadow:0 -2px 0 #17252c,inset 0 1px #ffffff22}
+.hotel-avatar-button,.hotel-tool-button{height:45px;border:1px solid #17262e;border-radius:5px;background:linear-gradient(#4c6672,#304853);color:#fff;box-shadow:inset 0 1px #ffffff2c,0 2px 0 #132129}
+.hotel-avatar-button:hover,.hotel-tool-button:hover{background:linear-gradient(#607c89,#3c5965)}
+.hotel-avatar-sprite,.hotel-profile-avatar{display:block;width:38px;height:38px;margin:auto;background-image:url('/assets/avatars.webp');background-size:550% 400%;background-position:5% 0%;background-repeat:no-repeat}
+.hotel-tool-button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px}.hotel-tool-button>span{font-size:18px;line-height:18px}.hotel-tool-button small{font:9px Arial,sans-serif}
+.hotel-chat-wrap{display:grid;grid-template-columns:82px minmax(120px,1fr) 62px;height:37px;border:1px solid #17262e;border-radius:5px;overflow:hidden;background:#fff;box-shadow:inset 0 1px 3px #0003}
+.hotel-chat-wrap select{border:0;border-right:1px solid #9daeb5;background:#d9e3e7;color:#30424a;padding:0 7px;font:11px Arial,sans-serif}
+.hotel-chat-wrap input{min-width:0;border:0;padding:0 10px;color:#24353d;background:#fff;font:13px Arial,sans-serif;outline:0}
+.hotel-chat-wrap button{border:0;border-left:1px solid #738994;background:linear-gradient(#e5ecef,#bdcbd1);color:#263a43;font:700 10px Arial,sans-serif}
+.hotel-chat-wrap button:hover{background:#f2f6f7}
+
+.hotel-window{position:fixed;z-index:80;border:3px solid #526f7d;border-radius:8px;background:#d7e1e5;color:#263a43;box-shadow:0 4px 0 #1e313a,0 18px 50px #0008;overflow:hidden;font-family:Arial,sans-serif}
+.hotel-window>header{height:34px;display:flex;align-items:center;justify-content:space-between;padding:0 8px;background:linear-gradient(#7894a0,#607c89);border-bottom:2px solid #425e6b;color:#fff;text-shadow:0 1px #263f4a}
+.hotel-window>header strong{font-size:13px}.hotel-window>header button{width:23px;height:23px;border:1px solid #405d69;border-radius:4px;background:#91a8b1;color:#fff;font-size:17px;line-height:18px}
+.hotel-navigator{left:50%;top:46%;transform:translate(-50%,-50%);width:min(620px,92vw);max-height:76vh}
+.hotel-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:7px 7px 0;background:#bacbd2}
+.hotel-tabs button{padding:7px 5px;border:1px solid #8199a3;border-bottom:0;border-radius:5px 5px 0 0;background:#a8bbc3;color:#3a525d;font:700 10px Arial,sans-serif}
+.hotel-tabs button.active{background:#eef3f5;color:#233740}
+.hotel-search{display:grid;grid-template-columns:1fr 62px;gap:5px;padding:8px;background:#eef3f5;border-bottom:1px solid #9eb0b7}
+.hotel-search input{height:28px;border:1px solid #8ba0a9;border-radius:4px;padding:0 8px;font-size:11px}.hotel-search button{border:1px solid #708995;border-radius:4px;background:#c6d4da;color:#2b424c;font:700 10px Arial,sans-serif}
+
+.hotel-room-list{max-height:52vh;overflow:auto;padding:7px;background:#f4f7f8}
+.hotel-room-list>button{width:100%;display:grid;grid-template-columns:76px 1fr 36px;align-items:center;gap:8px;margin-bottom:5px;padding:5px;border:1px solid #a7b6bc;border-radius:4px;background:linear-gradient(#fff,#e4ebee);color:#263a43;text-align:left}
+.hotel-room-list>button:hover,.hotel-room-list>button.active{background:#d7f0dc;border-color:#6c9c76}
+.hotel-room-list img{width:76px;height:48px;object-fit:cover;border:1px solid #6e858f;background:#151b1f}.hotel-room-list span{display:flex;flex-direction:column;gap:3px}.hotel-room-list strong{font-size:11px}.hotel-room-list small{font-size:9px;color:#687e87}.hotel-room-list em{font-style:normal;font:700 10px Arial,sans-serif;text-align:center;color:#fff;background:#67a875;border-radius:10px;padding:3px}
+.hotel-profile-panel{left:12px;bottom:68px;width:250px}.hotel-profile-body{display:grid;grid-template-columns:62px 1fr;gap:10px;padding:12px;background:#eef3f5}.hotel-profile-avatar{width:58px;height:58px}.hotel-profile-body>div{display:flex;flex-direction:column;gap:3px}.hotel-profile-body strong{font-size:13px}.hotel-profile-body small,.hotel-profile-body p{font-size:10px;color:#607984;margin:0}
+
+.tasks-view,.agents-view{position:fixed!important;z-index:75!important;left:50%!important;top:45%!important;transform:translate(-50%,-50%)!important;width:min(760px,90vw)!important;max-height:70vh!important;overflow:auto!important;padding:14px!important;border:3px solid #526f7d!important;border-radius:8px!important;background:#eef3f5!important;color:#263a43!important;box-shadow:0 4px 0 #1e313a,0 18px 50px #0008!important}
+.tasks-view .view-heading,.agents-view .view-heading{display:flex!important;margin:0 0 12px!important;color:#263a43!important}.tasks-view .view-heading h1,.agents-view .view-heading h1{font:700 22px Arial,sans-serif!important;color:#263a43!important}.tasks-view .view-heading p,.agents-view .view-heading p{color:#617983!important}
+.command-drawer{z-index:85!important;border-color:#526f7d!important;background:#eef3f5!important;color:#263a43!important}.command-drawer .center-header{background:linear-gradient(#7894a0,#607c89)!important;color:#fff!important}.command-drawer .center-summary,.command-drawer .queue-section,.command-drawer .activity-section,.command-drawer .pipeline-section{background:#eef3f5!important;color:#263a43!important}.command-drawer .connection-card{background:#d9eadb!important;color:#294231!important}
+@media(max-width:700px){.hotel-bottom-bar{grid-template-columns:46px 52px minmax(120px,1fr) 52px 52px;height:56px;padding:0 5px}.hotel-avatar-button{height:41px}.hotel-tool-button{height:41px}.hotel-tool-button small{display:none}.hotel-bottom-bar>#hotelTasksButton{display:none}.hotel-chat-wrap{grid-template-columns:1fr 48px}.hotel-chat-wrap select{display:none}.hotel-room-info{left:8px;top:8px;min-width:150px}.scene{width:126vw!important}.hotel-navigator{top:43%;}.hotel-chat-feed{bottom:66px;width:90vw}.tasks-view,.agents-view{top:42%!important;width:94vw!important;max-height:68vh!important}}
+
+/* Final hotel-mode cleanup */
+.office-toolbar,.room-overlay,.zoom-controls,.meeting-panel{display:none!important}
+.scene-demo-label{top:18px!important;right:18px!important}
+.command-drawer{top:52px!important;right:12px!important;max-height:calc(100vh - 122px)!important}
+.dialog{z-index:120}
+.toast{z-index:130}
+
+.hotel-player{position:absolute;z-index:120;left:50%;top:69%;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:1px;background:none!important;border:0!important;filter:drop-shadow(0 3px 2px #0007)}
+.hotel-player-sprite{display:block;width:44px;height:58px;background-image:url('/assets/avatars.webp');background-size:550% 400%;background-position:5% 0%;background-repeat:no-repeat}
+.hotel-player b{padding:2px 5px;border:1px solid #285c49;border-radius:3px;background:#14734f;color:#fff;font:700 8px Arial,sans-serif;box-shadow:0 1px #0006}
+#scene[data-room="lobby"] .hotel-player{left:51%;top:72%}
+#scene[data-room="meeting"] .hotel-player{left:54%;top:70%}
+#scene[data-room="commercial"] .hotel-player{left:51%;top:72%}
+#scene[data-room="noc"] .hotel-player{left:51%;top:73%}
+#scene[data-room="cafe"] .hotel-player{left:52%;top:72%}
+
+.hotel-room-action{position:fixed;z-index:45;right:18px;top:16px;padding:8px 12px;border:2px solid #526f7d;border-radius:5px;background:linear-gradient(#dce7eb,#b7c7cd);color:#263a43;font:700 11px Arial,sans-serif;box-shadow:0 2px 0 #2a414b}
+.hotel-room-action:hover{background:#eef4f6}
