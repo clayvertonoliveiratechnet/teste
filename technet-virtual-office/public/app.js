@@ -55,7 +55,7 @@ let meetingActive=false,meetingRun=false,meetingEpoch=0,localConnector=localStor
 const world=createWorld($('#hotspots'),openAgent,()=>{if(meetingActive){$('#meetingState').textContent='Equipe reunida · pronta para conversar';$('#runMeeting').disabled=false;renderRoomStatus()}});
 function hotelFeed(text,type='system'){const line=node('div','hotel-chat-line '+type);line.textContent=text;$('#roomChatFeed').append(line);while($('#roomChatFeed').children.length>4)$('#roomChatFeed').firstElementChild.remove();setTimeout(()=>line.remove(),6500)}
 hotelWorld=createHotelWorld({scene:$('#scene'),player:$('#playerAvatar'),onRoomChange:(room,spawn)=>setRoom(room,false,spawn),onPresence:(room,count)=>{const badge=document.querySelector('.hotel-room-list > button[data-room="'+room+'"] em');if(badge)badge.textContent=String(count).padStart(2,'0');if(ui.room===room)$('#hotelRoomMeta').textContent=rooms[room].floor+' · '+count+' online'},onSystemMessage:hotelFeed});
-window.__hotelWorld=hotelWorld;
+window.__hotelWorld=hotelWorld;window.__setHotelRoom=(room,spawn=null)=>setRoom(room,false,spawn);window.__openHotelAgent=id=>{const agent=agents.find(a=>a.id===id);if(agent)openAgent(agent)};
 document.querySelectorAll('[data-room]').forEach(button=>button.onclick=()=>{showView('office');setRoom(button.dataset.room);setRoomMap(false)});
 $('#commandToggle').onclick=()=>setCommandDrawer($('#commandCenter').classList.contains('collapsed'));
 $('#commandDrawerClose').onclick=()=>setCommandDrawer(false);

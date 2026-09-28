@@ -235,3 +235,27 @@ html,body{width:100%;height:100%;overflow:hidden;background:#070a0d}
  .hotel-portal{font-size:8px;padding:3px 5px}
  .hotel-player-bubble,.hotel-peer-bubble{max-width:130px;font-size:9px}
 }
+/* === Technet Space 3D === */
+.hotel-bottom-bar{grid-template-columns:58px 72px 64px minmax(240px,1fr) 64px 58px 64px}
+.space3d-layer{position:fixed;inset:0 0 58px 0;z-index:24;background:radial-gradient(circle at 50% 35%,#1a2328,#080d10 70%);overflow:hidden}
+.space3d-layer[hidden]{display:none}
+#space3dCanvas{position:absolute;inset:0}
+#space3dCanvas canvas{display:block;width:100%!important;height:100%!important;outline:0}
+.space3d-ui{position:absolute;right:14px;top:14px;z-index:3;display:flex;align-items:center;gap:8px;pointer-events:none}
+.space3d-ui span{padding:6px 8px;border:1px solid #4f6d79;border-radius:5px;background:#142128dd;color:#a9f0c3;font:700 9px Arial,sans-serif;letter-spacing:.7px;box-shadow:0 2px 0 #081015}
+.space3d-ui button{pointer-events:auto;padding:6px 8px;border:1px solid #607985;border-radius:5px;background:linear-gradient(#dce7eb,#b9c8ce);color:#263b45;font:700 9px Arial,sans-serif;box-shadow:0 2px 0 #293f49}
+.hotel-tool-button.active{background:linear-gradient(#7a9daf,#466676);box-shadow:inset 0 1px #ffffff55,0 2px 0 #132129}
+body.mode-3d .scene-viewport{opacity:0;pointer-events:none}
+body.mode-3d .hotel-player,body.mode-3d .hotel-peer,body.mode-3d .hotel-portal,body.mode-3d .hotel-interact-hint{opacity:0;pointer-events:none}
+
+.space3d-label{position:absolute;z-index:25;transform:translate(-50%,-100%);padding:3px 6px;border:1px solid #315f6d;border-radius:4px;background:#173d4bdd;color:#eaf8fb;font:700 9px Arial,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 2px 0 #08171d99}
+.space3d-label.player{background:#16704e;border-color:#32946a}
+.space3d-label.peer{background:#246a83;border-color:#4e9bb7}
+.space3d-label.agent{background:#0e5c45;border-color:#2d8768}
+.space3d-speech{position:absolute;z-index:26;transform:translate(-50%,-125%);max-width:220px;padding:6px 9px;border:1px solid #81959d;border-radius:10px;background:#f5f7f8;color:#26343a;font:11px Arial,sans-serif;white-space:nowrap;pointer-events:none;box-shadow:0 2px 0 #44545b88}
+@media(max-width:700px){
+ .hotel-bottom-bar{grid-template-columns:46px 48px minmax(120px,1fr) 46px 46px 46px;height:56px;padding:0 4px}
+ .hotel-bottom-bar>#hotelTasksButton{display:none}
+ .space3d-layer{bottom:56px}
+ .space3d-ui{right:7px;top:7px}.space3d-ui button{display:none}.space3d-ui span{font-size:7px;padding:4px 5px}
+}

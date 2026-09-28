@@ -5,7 +5,7 @@
   <meta name="theme-color" content="#11191d"><meta name="description" content="Sua central de agentes de IA. Dê uma ordem, organize a equipe e acompanhe cada entrega no escritório virtual Technet.">
   <title>Technet Space • HQ virtual</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='10' fill='%237cf6b8'/%3E%3Cpath d='M10 12h20v6h-7v13h-6V18h-7z' fill='%23131c20'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="/style.css?v=technet-hotel-world-v1">
+  <link rel="stylesheet" href="/style.css?v=technet-space-3d-v1">
 </head>
 <body>
 <svg class="icon-defs" aria-hidden="true"><defs>
@@ -75,7 +75,7 @@
   </div>
 </div>
 
-<div id="hotelRoomInfo" class="hotel-room-info"><strong id="hotelRoomName">Central de IA</strong><span id="hotelRoomMeta">Sala 02 · 5 agentes</span></div><div class="hotel-control-hint">WASD / setas · clique para andar · E interage</div><button id="hotelMeetingAction" class="hotel-room-action" hidden>Convocar equipe</button>
+<div id="space3dLayer" class="space3d-layer" aria-label="Ambiente 3D interativo"><div id="space3dCanvas"></div><div class="space3d-ui"><span id="space3dMode">MODO 3D · LIVE</span><button id="space3dResetCamera">Recentrar câmera</button></div></div><div id="hotelRoomInfo" class="hotel-room-info"><strong id="hotelRoomName">Central de IA</strong><span id="hotelRoomMeta">Sala 02 · 5 agentes</span></div><div class="hotel-control-hint">WASD / setas · clique para andar · E interage · botão direito gira câmera</div><button id="hotelMeetingAction" class="hotel-room-action" hidden>Convocar equipe</button>
 <div id="roomChatFeed" class="hotel-chat-feed" aria-live="polite"></div>
 <div class="hotel-bottom-bar" id="hotelBottomBar">
   <button id="hotelProfileButton" class="hotel-avatar-button" aria-label="Perfil"><span class="hotel-avatar-sprite"></span></button>
@@ -83,7 +83,7 @@
   <button id="hotelTasksButton" class="hotel-tool-button"><span>✓</span><small>Tarefas</small></button>
   <div class="hotel-chat-wrap"><select id="hotelChatMode" aria-label="Modo de chat"><option>Falar</option><option>Sussurrar</option><option>Gritar</option></select><input id="hotelChatInput" maxlength="180" placeholder="Clique aqui para falar..." autocomplete="off"><button id="hotelChatSend">Enviar</button></div>
   <button id="hotelTeamButton" class="hotel-tool-button"><span>☺</span><small>Equipe</small></button>
-  <button id="hotelCommandButton" class="hotel-tool-button"><span>⚙</span><small>Central</small></button>
+  <button id="hotel3DButton" class="hotel-tool-button active" aria-pressed="true"><span>◈</span><small>3D</small></button><button id="hotelCommandButton" class="hotel-tool-button"><span>⚙</span><small>Central</small></button>
 </div>
 
 <section id="hotelNavigator" class="hotel-window hotel-navigator" hidden aria-label="Navegador de salas">
@@ -105,5 +105,5 @@
 <dialog id="detailDialog" class="dialog"><div class="dialog-top"><span id="dialogEyebrow" class="eyebrow">AGENTE</span><button class="dialog-close icon-button" aria-label="Fechar">×</button></div><div id="dialogContent"></div></dialog>
 <dialog id="settingsDialog" class="dialog settings-dialog"><div class="dialog-top"><span class="eyebrow">CONEXÃO DE IA</span><button class="dialog-close icon-button" aria-label="Fechar">×</button></div><div class="settings-icon"><svg class="icon"><use href="#i-settings"/></svg></div><h2>Coloque sua equipe para trabalhar.</h2><p>O escritório distribui os pedidos. O provedor de IA produz as entregas de cada agente.</p><p id="localAccountNote"></p><div id="accountList" class="account-list"></div><p id="selectedAccount" class="settings-note"></p><a href="/downloads/technet-local.zip" class="primary-button" download>Baixar central para o computador ↓</a><button id="useServer" class="text-button" hidden>Usar provedor do servidor</button><div id="settingsStatus" class="settings-status"></div><details><summary>Configuração do servidor</summary><p>Configure uma chave no ambiente do servidor: <code>OPENAI_API_KEY</code> ou <code>GROQ_API_KEY</code>. Defina também <code>AI_PROVIDER</code> e <code>AI_MODEL</code>. A chave nunca é enviada ao navegador. Depois, clique em verificar conexão.</p></details><button id="retryConnection" class="primary-button full-width">Verificar conexão <svg class="icon"><use href="#i-arrow"/></svg></button><p class="settings-note">Os pedidos ficam salvos neste navegador. Conectar a IA não executa pedidos antigos sem você iniciá-los.</p></dialog>
 <dialog id="meetingDialog" class="dialog"><div class="dialog-top"><span class="eyebrow">REUNIR A EQUIPE</span><button class="dialog-close icon-button" aria-label="Fechar">×</button></div><h2>Uma mesa. Cinco perspectivas.</h2><p>Escolha a pauta. Os agentes deixam as mesas e se encontram para colaborar.</p><form id="meetingForm"><label for="meetingAgenda">Pauta da reunião</label><textarea id="meetingAgenda" required minlength="8" maxlength="1000" placeholder="Ex.: Como aumentar as vendas da Technet neste mês?"></textarea><button class="primary-button" type="submit">Convocar os cinco agentes</button></form><p class="settings-note">Convocar movimenta os avatares. A discussão com IA começa somente quando você iniciar a rodada.</p></dialog><div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script><script type="module" src="/app.js?v=technet-hotel-world-v1"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script><script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/"}}</script><script type="module" src="/app.js?v=technet-space-3d-v1"></script><script type="module" src="/space3d.js?v=technet-space-3d-v1"></script>
 </body></html>

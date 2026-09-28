@@ -76,7 +76,7 @@ test('poses sentadas continuam corretas na Central e reunião', async ({browser}
   await page.locator('#hotelMeetingAction').click();
   await page.locator('#meetingAgenda').fill('Validar poses sentadas da equipe.');
   await page.locator('#meetingForm button[type="submit"]').click();
-  await page.waitForTimeout(250);
+  await expect.poll(async () => page.locator('.world-agent[data-seated="true"]').count(), {timeout: 5000}).toBe(5);
   const meeting = await page.locator('.world-agent .world-sprite').evaluateAll(els => els.map(el => el.style.transform));
   expect(meeting.every(value => value.includes('scale(0.92)'))).toBe(true);
   await context.close();
@@ -117,6 +117,8 @@ test('avatar responde a WASD e click-to-walk respeitando os limites da sala', as
 
 test('portas e interação E permitem trocar de sala e sentar', async ({page}) => {
   await page.goto('/');
+  await page.locator('#hotel3DButton').click();
+  await expect(page.locator('#space3dLayer')).toBeHidden();
   await page.locator('.hotel-portal').first().click();
   await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
 
@@ -144,4 +146,36 @@ test('chat e perfil acompanham o avatar controlável', async ({page}) => {
   await page.locator('#hotelChatInput').fill('Olá equipe');
   await page.locator('#hotelChatSend').click();
   await expect(page.locator('.hotel-player-bubble')).toHaveText('Olá equipe');
+});
+test('modo 3D abre por padrão, acompanha a sala e permite fallback 2D', async ({page}) => {
+  await page.goto('/');
+  await expect(page.locator('#space3dLayer')).toBeVisible();
+  await expect(page.locator('#space3dCanvas canvas')).toHaveCount(1);
+  await expect.poll(async () => page.evaluate(() => window.__space3d?.currentRoom)).toBe('central');
+  await expect(page.locator('body')).toHaveClass(/mode-3d/);
+
+  await page.locator('#hotelNavigatorButton').click();
+  await page.locator('.hotel-room-list > button[data-room="cafe"]').click();
+  await expect.poll(async () => page.evaluate(() => window.__space3d?.currentRoom)).toBe('cafe');
+
+  await page.locator('#hotel3DButton').click();
+  await expect(page.locator('#space3dLayer')).toBeHidden();
+  await expect(page.locator('#hotel3DButton')).toHaveAttribute('aria-pressed', 'false');
+
+  await page.locator('#hotel3DButton').click();
+  await expect(page.locator('#space3dLayer')).toBeVisible();
+  await expect(page.locator('#hotel3DButton')).toHaveAttribute('aria-pressed', 'true');
+});
+
+test('movimento do avatar continua refletido no estado usado pelo 3D', async ({page}) => {
+  await page.goto('/');
+  await expect.poll(async () => page.evaluate(() => !!window.__space3d && !!window.__hotelWorld)).toBe(true);
+  const start = await page.evaluate(() => window.__hotelWorld.state.x);
+  await page.keyboard.down('d');
+  await page.waitForTimeout(650);
+  await page.keyboard.up('d');
+  await page.waitForTimeout(150);
+  const end = await page.evaluate(() => window.__hotelWorld.state.x);
+  expect(end).toBeGreaterThan(start + 3);
+  await expect(page.locator('#space3dCanvas canvas')).toBeVisible();
 });

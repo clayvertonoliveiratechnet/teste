@@ -74,3 +74,11 @@ Correção de circulação: corredores externos às baias, assentos como destino
 - O chat aparece sobre o avatar e é transmitido aos usuários conectados à mesma sala. Comandos disponíveis: `/where`, `/sit`, `/stand` e `/help`.
 - O perfil permite alterar o nome exibido no hotel. O nome é armazenado localmente no navegador.
 - Presença multiplayer usa canais Realtime isolados no formato `technet-space:<sala>`, sem gravar dados de negócio em tabelas do Supabase.
+## Modo 3D interativo
+
+- O Technet Space abre por padrão em um ambiente 3D WebGL com câmera isométrica livre e fallback 2D no botão **3D**.
+- O mesmo estado de movimento controla as duas visualizações: WASD/setas, clique no piso, colisão, portas e interação continuam sincronizados.
+- Os agentes Atlas, Ada, Luna, Davi e Maya ganham representação 3D; deslocamentos e reuniões acompanham as posições do motor 2D.
+- Terminais da Central refletem estado de trabalho visualmente; usuários do Realtime aparecem como avatares 3D na sala.
+- Botão direito gira a câmera, roda do mouse aproxima/afasta e **Recentrar câmera** restaura o enquadramento.
+- Cada sala possui uma composição 3D própria: Central, Lobby, Reunião, Comercial, NOC/Operações e Café & Lounge.
