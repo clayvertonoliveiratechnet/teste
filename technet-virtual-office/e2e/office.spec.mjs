@@ -3,7 +3,7 @@ import {test, expect} from '@playwright/test';
 test('escritório abre com os cinco agentes', async ({page}) => {
   await page.goto('/');
   await expect(page).toHaveTitle(/Technet/);
-  await expect(page.getByRole('heading', {name: /Um escritório/})).toBeVisible();
+  await expect(page.getByRole('heading', {name: /Seu escritório virou um mundo/})).toBeVisible();
   await expect(page.locator('#officeImage')).toBeVisible();
   await expect(page.locator('.world-agent')).toHaveCount(5);
   await expect(page.locator('#availableCount')).toContainText('5 agentes');
@@ -81,4 +81,24 @@ test('cada cadeira aplica a pose sentada correta', async ({browser}) => {
   expect(seats.filter(seat => seat.top < 35)).toHaveLength(2);
   expect(Math.min(...seats.map((a, i) => Math.min(...seats.filter((_, j) => j !== i).map(b => Math.hypot(a.left - b.left, a.top - b.top)))))).toBeGreaterThan(5);
   await context.close();
+});
+test('navegador de salas troca Lobby, Central e Reunião sem recarregar', async ({page}) => {
+  await page.goto('/');
+  await page.locator('.room-nav-button[data-room="lobby"]').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'lobby');
+  await expect(page.locator('#roomName')).toHaveText('Lobby');
+  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/rooms/lobby.webp');
+  await expect(page.locator('#lobbyOverlay')).toBeVisible();
+  await expect(page.locator('#commandCard')).toBeHidden();
+
+  await page.locator('.portal-central').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'central');
+  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/office-empty.webp');
+  await expect(page.locator('#hotspots')).toBeVisible();
+  await expect(page.locator('#commandCard')).toBeVisible();
+
+  await page.locator('.room-nav-button[data-room="meeting"]').click();
+  await expect(page.locator('#scene')).toHaveAttribute('data-room', 'meeting');
+  await expect(page.locator('#officeImage')).toHaveAttribute('src', '/assets/rooms/meeting.webp');
+  await expect(page.locator('#meetingRoomOverlay')).toBeVisible();
 });

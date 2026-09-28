@@ -43,3 +43,57 @@
 
 .world-agent[data-meeting="true"][data-state="walking"] .world-label{opacity:0}
 .world-agent[data-meeting="true"][data-seated="true"] .world-label{left:calc(50% + var(--label-shift));bottom:101%;opacity:0}.world-agent[data-meeting="true"][data-seated="true"]:hover .world-label,.world-agent[data-meeting="true"][data-seated="true"]:focus-visible .world-label,.world-agent[data-meeting="true"][data-seated="true"].speaking .world-label{opacity:1}
+/* === Technet Space Social HQ identity === */
+:root{--bg:#0f1718;--panel:#172526;--line:#39564d;--muted:#9db1a8;--text:#f3f7f2;--green:#8de9b5;--green-dark:#213f34;--amber:#d7a45d;--gold:#f0c977}
+body{background:radial-gradient(circle at 72% 8%,#1d3430 0,#0f1718 33%,#0b1214 100%);min-height:100vh}
+.sidebar{background:linear-gradient(180deg,#13201f 0,#10191b 72%,#0d1517 100%);border-right-color:#304b44}
+.brand-mark{border-radius:12px;box-shadow:0 4px 0 #315848,0 8px 20px #0005}
+.brand-caption{color:#d7a45d;letter-spacing:1.5px}.brand-beta{color:#f0c977;border-color:#735f3a;background:#2f281c}
+.workspace-switch{background:linear-gradient(145deg,#1c302b,#152522);border:1px solid #416358;border-radius:12px;box-shadow:inset 0 1px #ffffff08,0 5px 0 #0b1213}
+.workspace-switch .workspace-icon{background:linear-gradient(145deg,#2f5948,#213e34);border-color:#5a8b72;box-shadow:0 3px 0 #13241d}
+.workspace-switch .workspace-hq{color:#ffe0a6;border-color:#7b6541;background:#382e20}
+.rooms-title{color:#d7a45d}
+.room-nav{display:grid;gap:7px;margin:0 2px}
+.room-nav-button{display:grid;grid-template-columns:35px 1fr auto;align-items:center;gap:9px;text-align:left;padding:9px;border:1px solid transparent;border-radius:9px;color:#a7bbb3}
+.room-nav-button:hover{background:#1d302d;border-color:#355249}.room-nav-button.active{background:linear-gradient(135deg,#294c3d,#223b34);border-color:#609177;color:#effaf2;box-shadow:inset 3px 0 #8de9b5,0 3px 0 #0b1412}
+
+.room-nav-icon{display:grid;place-items:center;width:33px;height:33px;border-radius:8px;background:#172523;border:1px solid #36534a;color:#d7a45d;font-size:17px;box-shadow:0 2px 0 #0c1413}
+.room-nav-button.active .room-nav-icon{color:#c7ffdc;background:#315843;border-color:#6da37d}
+.room-nav-button>span:nth-child(2){min-width:0;display:flex;flex-direction:column;gap:2px}.room-nav-button strong{font:600 12px 'Space Grotesk',sans-serif}.room-nav-button small{font-size:9px;color:#78948a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.room-nav-button em{font-style:normal;font:700 9px ui-monospace,monospace;color:#806f4f;background:#26251d;border:1px solid #514a35;border-radius:4px;padding:3px 4px}.room-nav-button.active em{color:#bff0ce;background:#274236;border-color:#4c735d}
+.room-rule{margin:17px 8px}.topbar{background:linear-gradient(90deg,#121d1f,#152123);border-bottom-color:#30453f}
+.breadcrumb span:first-child{color:#d7a45d}.mode-badge{background:#2b3021;border-color:#665d39;color:#e5d8a9}
+.main-layout{position:relative}.view-heading h1 b{font:inherit;color:#f3f7f2}.view-heading h1 span{color:#8de9b5}
+.office-card{border-color:#4a665d;border-radius:14px;box-shadow:0 5px 0 #0a1112,0 22px 55px #0004}
+.office-toolbar{background:linear-gradient(180deg,#233534,#1b292b);border-bottom-color:#476158}
+.office-title strong{font-family:'Space Grotesk',sans-serif}.floor-tag{color:#f0c977;border-color:#6f603e;background:#302a1f;font-weight:700;letter-spacing:.5px}
+.scene-viewport{background:linear-gradient(#111b1f,#0c1518);border-bottom:1px solid #2d443e}
+#scene[data-room="lobby"] img,#scene[data-room="meeting"] img{object-fit:cover}
+#scene[data-room="lobby"] .welcome-sign,#scene[data-room="meeting"] .welcome-sign{display:none}
+.room-dock{display:flex;gap:7px;align-items:center;justify-content:center;padding:8px 12px;background:#111c1d;border-top:1px solid #2d4540;border-bottom:1px solid #314840}
+
+.room-dock button{display:flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid #344d46;border-radius:7px;background:#1b2928;color:#8fa79e;font-size:10px;box-shadow:0 2px 0 #091011}
+.room-dock button span{color:#d7a45d;font-size:13px}.room-dock button:hover{background:#263a34;color:#eaf5ee}.room-dock button.active{background:#355d47;border-color:#75a982;color:#effff3;box-shadow:0 2px 0 #173326,inset 0 1px #ffffff12}.room-dock button.active span{color:#baf1ca}
+.room-overlay{position:absolute;inset:0;z-index:8;pointer-events:none}.room-plaque{position:absolute;top:18px;left:18px;display:flex;flex-direction:column;gap:3px;max-width:245px;padding:11px 13px;border:1px solid #746440;border-radius:8px;background:#1a211de8;box-shadow:4px 5px 0 #0005;backdrop-filter:blur(5px)}
+.room-kicker{font:700 8px ui-monospace,monospace;letter-spacing:1.2px;color:#f0c977}.room-plaque strong{font:700 17px 'Space Grotesk',sans-serif;color:#fff}.room-plaque small{font-size:10px;line-height:1.4;color:#a9bcb3}
+.portal{position:absolute;pointer-events:auto;display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 11px;border:1px solid #d2ae68;border-radius:8px;background:#19241fe8;color:#f6f2df;box-shadow:4px 4px 0 #10100caa;animation:portalPulse 2.4s ease-in-out infinite}
+.portal:hover{background:#31513f;transform:translateY(-2px)}.portal>span{color:#f0c977;font-size:16px}.portal strong{font:700 11px 'Space Grotesk',sans-serif}.portal small{font-size:8px;color:#b8c9bf}
+.portal-central{right:7%;top:45%}.portal-meeting{left:9%;top:24%}
+.meeting-overlay .room-plaque{border-color:#5b7c6a;background:#15251fe8}.participant-strip{position:absolute;left:50%;bottom:19px;transform:translateX(-50%);display:flex;gap:5px;padding:7px;border:1px solid #435d54;border-radius:9px;background:#101a1ce8;box-shadow:0 5px 0 #07100e}
+.participant-strip span{font-size:8px;padding:5px 7px;border-radius:5px;background:#263d35;color:#bcd8c7;border:1px solid #3f5e51}
+.meeting-room-action{position:absolute;right:18px;bottom:18px;pointer-events:auto;padding:9px 13px;border:1px solid #f0d08f;border-radius:7px;background:#d7a45d;color:#2b2113;font-size:10px;font-weight:800;box-shadow:0 3px 0 #6c532d}
+.meeting-room-action:hover{background:#f0c977;color:#2b2113}
+
+.command-card{border-color:#3f6254;background:linear-gradient(140deg,#1b302a,#152326 78%);box-shadow:0 4px 0 #0b1211}
+.command-card form{border-color:#496a5c;background:#101c1b}.primary-button{background:linear-gradient(#b3f2c8,#8de9b5);border-color:#c9f7d7;box-shadow:0 3px 0 #3f7559;color:#10281c}
+.secondary-button{border-color:#466258;background:linear-gradient(#1f312d,#172622);box-shadow:0 2px 0 #0a1110}
+.command-center{border-color:#3d564f;background:#142021;box-shadow:0 5px 0 #0a1112}.center-header{background:linear-gradient(#223332,#192829);border-bottom-color:#3d574f}.connection-card{background:#203229}
+.app-footer{border-top:1px solid #243a35;background:#0d1618}
+@keyframes portalPulse{0%,100%{box-shadow:4px 4px 0 #10100caa,0 0 0 #d7a45d00}50%{box-shadow:4px 4px 0 #10100caa,0 0 18px #d7a45d35}}
+@media(max-width:1180px){.room-nav-button{grid-template-columns:30px 1fr auto;padding:7px}.room-nav-icon{width:29px;height:29px}.room-nav-button small{font-size:8px}}
+@media(max-width:680px){.room-dock{padding:6px;gap:4px}.room-dock button{flex:1;justify-content:center;padding:6px 5px;font-size:8px}.room-plaque{top:8px;left:8px;max-width:175px;padding:7px 8px}.room-plaque strong{font-size:12px}.room-plaque small{font-size:7px}.portal{padding:6px 7px}.portal strong{font-size:8px}.portal small{display:none}.participant-strip{bottom:8px;gap:3px;padding:4px}.participant-strip span{font-size:6px;padding:3px}.meeting-room-action{right:8px;bottom:8px;padding:6px 8px;font-size:8px}}
+
+@media(max-width:680px){
+  .room-nav{display:none}
+  .room-dock{position:relative;z-index:3}
+}
