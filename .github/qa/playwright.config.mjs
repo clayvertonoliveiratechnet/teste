@@ -1,7 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  testDir: '.github/qa',
+  testDir: '.',
   testMatch: /.*\.spec\.mjs/,
   timeout: 30_000,
   retries: 1,
@@ -11,5 +11,5 @@ export default defineConfig({
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  outputDir: 'artifacts/playwright-results',
+  outputDir: '../../artifacts/playwright-results',
 });
