@@ -1,0 +1,59 @@
+name: AI Quality Gate
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-quality-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-browser-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      VITE_SUPABASE_URL: https://example.supabase.co
+      VITE_SUPABASE_PUBLISHABLE_KEY: local-ci-placeholder
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install app
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Install QA runtime
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.55.0 wait-on@8.0.3
+          npx playwright install --with-deps chromium
+
+      - name: Start app
+        run: |
+          mkdir -p artifacts
+          npm run dev -- --host 127.0.0.1 --port 4173 > artifacts/vite.log 2>&1 &
+          npx wait-on http://127.0.0.1:4173
+
+      - name: Browser smoke
+        run: npx playwright test -c .github/qa/playwright.config.mjs
+
+      - name: Upload QA artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ai-quality-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
