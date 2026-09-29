@@ -1,0 +1,45 @@
+name: TECHNET AI Task
+description: Delegue uma feature, correção ou melhoria ao fluxo multiagente.
+title: "[AI] "
+body:
+  - type: textarea
+    id: objective
+    attributes:
+      label: Objetivo
+      description: O que precisa ficar pronto?
+      placeholder: Descreva o resultado esperado.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Critérios de aceite
+      description: Como saberemos que ficou bom?
+      placeholder: Liste comportamentos observáveis e requisitos.
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: Referências
+      description: Links, screenshots, telas ou exemplos que devem ser usados como referência.
+    validations:
+      required: false
+  - type: textarea
+    id: preserve
+    attributes:
+      label: Não alterar
+      description: Áreas, regras ou comportamentos que precisam ser preservados.
+    validations:
+      required: false
+  - type: checkboxes
+    id: quality
+    attributes:
+      label: Quality gates
+      options:
+        - label: Build deve passar
+          required: true
+        - label: Validar no navegador quando houver impacto visual ou de fluxo
+          required: true
+        - label: Não aceitar regressões conhecidas
+          required: true
